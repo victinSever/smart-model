@@ -35,7 +35,7 @@ export default defineComponent({
 <template>
   <tabs v-if="state.openTabsPage" :tabs="store.state.tabs" :activeTabName="store.state.activeTabName"></tabs>
   <div class="rr-view-ctx">
-    <el-card shadow="never" class="rr-view-ctx-card">
+    <el-card shadow="never" class="rr-view-ctx-card" style="height: 100%">
       <router-view v-slot="{ Component }">
         <keep-alive v-if="enabledKeepAlive">
           <component :is="Component" :key="routerKeys[$route.fullPath] || $route.fullPath" />
@@ -45,3 +45,12 @@ export default defineComponent({
     </el-card>
   </div>
 </template>
+
+<style lang="scss" scoped>
+.rr-view-ctx-card {
+  height: 100%;
+  & :deep(>.el-card__body)  {
+    height: 100%;
+  }
+}
+</style>

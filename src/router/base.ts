@@ -3,6 +3,7 @@ import Error from "@/views/error.vue";
 import {RouteRecordRaw} from "vue-router";
 import Login from "@/views/login.vue";
 import Iframe from "@/views/iframe.vue";
+import Detail from "@/views/model/detail.vue";
 
 /**
  * 框架基础路由
@@ -41,6 +42,12 @@ const routes: Array<RouteRecordRaw> = [
     name: "error",
     component: Error,
     meta: {title: "错误页面", isNavigationMenu: false}
+  },
+  {
+    path: "/model/detail/:id?",
+    name: "detail",
+    component: Detail,
+    meta: {title: "模型详情", isNavigationMenu: false}
   },
 ];
 
