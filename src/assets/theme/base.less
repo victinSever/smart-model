@@ -1,0 +1,32 @@
+//定义基础色
+
+//主色
+
+body {
+  --color-primary: #687c91;
+  --color-primary-light: rgb(64 158 255 / 8%);
+}
+
+@--color-primary: ~ 'var(--color-primary)';
+@--color-primary-light: ~ 'var(--color-primary-light)';
+
+@text: #000000;
+@text-2: #000000;
+
+//导航菜单
+@dark-text: rgba(0, 0, 0, 0.77); // 修改侧边栏字体颜色
+@dark-text-active: #000000;
+@dark-bg: #ffffff; // 侧边栏背景颜色
+@dark-bg-active: #dae4e0; // 侧边栏脚垫颜色
+
+@light-text: @text;
+@light-text-active: #000000;
+@light-bg: #fff;
+@light-bg-active: rgba(255, 255, 255, 0.77);
+
+@primary-text: rgba(255, 255, 255, 0.77);
+@primary-text-2: rgb(255 255 255 / 77%);
+@primary-text-active: #ffffff; // 鼠标点击顶部主页颜色
+@primary-bg: rgba(99, 90, 197, 0.77); // 修改顶部颜色
+@primary-bg-light: rgba(215, 223, 221, 0.77); // 修改标签页颜色
+@primary-bg-active: rgba(113, 145, 110, 0.77);
