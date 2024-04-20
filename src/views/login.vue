@@ -114,7 +114,6 @@ const onLogin = () => {
       baseService
         .post("/login", login)
         .then((res) => {
-          console.log(res)
           state.loading = false;
           if (res.code === 0) {
             setCache(CacheToken, res.data, true);

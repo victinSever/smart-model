@@ -250,3 +250,29 @@ export const useDebounce = (
     ...options
   });
 };
+
+/**
+ * 文本复制 
+ * @param text
+ * @returns
+ */
+export const copyTextToClipboard = (text: string): boolean => {
+  // 创建一个临时的textarea元素
+  const textarea = document.createElement('textarea');
+  textarea.value = text;
+  textarea.setAttribute('readonly', ''); // 设置为只读，防止聚焦时修改内容
+  textarea.style.position = 'absolute';
+  textarea.style.left = '-9999px'; // 移出屏幕可见区域
+  document.body.appendChild(textarea);
+  textarea.select(); // 选中textarea中的内容
+
+  let success = false;
+  try {
+    success = document.execCommand('copy'); // 尝试执行复制命令
+  } catch (error) {
+    console.error('Copy failed:', error);
+  }
+
+  document.body.removeChild(textarea); // 移除临时的textarea元素
+  return success;
+}

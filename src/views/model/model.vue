@@ -26,38 +26,36 @@
         </div>
         <div class="main-right">
             <div class="right-top">
-                <el-input v-model="modelParam.modelName" style="width: 240px" placeholder="输入模型名称" 
-                    :suffix-icon="Search" @change="getModel"/>
+                <el-input v-model="modelParam.modelName" style="width: 240px" placeholder="输入模型名称" :suffix-icon="Search"
+                    @change="getModel" />
             </div>
             <div class="right-main">
-                <el-row :gutter="20" class="model-list">
-                    <el-col :span="8" v-for="item in modelMap.list" class="model-item">
-                        <el-card style="min-width: 300px;" @click="gotoDetail(item)">
-                            <template #header>
-                                <div class="card-header">
-                                    <div class="item-img">
-                                        <el-image :src="item.imagePath"></el-image>
-                                    </div>
-                                    <div class="item-info">
-                                        <p class="modelName">{{ item.modelName }}</p>
-                                        <p class="label">{{ item.label }}</p>
-                                    </div>
+                <el-row class="model-list">
+                    <el-card v-for="item in modelMap.list" class="model-item"
+                        @click="gotoDetail(item)">
+                        <template #header>
+                            <div class="card-header">
+                                <div class="item-img">
+                                    <el-image :src="item.imagePath"></el-image>
                                 </div>
-                            </template>
+                                <div class="item-info">
+                                    <p class="modelName">{{ item.modelName }}</p>
+                                    <p class="label">{{ item.label }}</p>
+                                </div>
+                            </div>
+                        </template>
 
-                            <el-tooltip class="box-item" effect="light" placement="top"
-                                content-class="item-describe-full">
-                                <p class="item-describe">{{ item.describe }}</p>
-                                <template #content>
-                                    <p class="item-describe-full">{{ item.describe }}</p>
-                                </template>
-                            </el-tooltip>
-
-                            <template #footer>
-                                <span>{{ item.updateTime + '更新' }}</span>
+                        <el-tooltip class="box-item" effect="light" placement="top" content-class="item-describe-full">
+                            <p class="item-describe">{{ item.describe }}</p>
+                            <template #content>
+                                <p class="item-describe-full">{{ item.describe }}</p>
                             </template>
-                        </el-card>
-                    </el-col>
+                        </el-tooltip>
+
+                        <template #footer>
+                            <span>{{ item.updateTime + '更新' }}</span>
+                        </template>
+                    </el-card>
                 </el-row>
             </div>
             <el-pagination v-model:current-page="modelParam.page" v-model:page-size="modelParam.limit"
@@ -69,22 +67,24 @@
     <div class="model-detail-container" v-else>
         <el-card class="back" @click="gotoBack">
             <div class="back-box">
-                <el-icon><ArrowLeft /></el-icon>
+                <el-icon>
+                    <ArrowLeft />
+                </el-icon>
                 <span>返回</span>
             </div>
         </el-card>
         <el-card>
             <template #header>
                 <div class="card-header">
-                        <h2 class="modelName">{{ currentDetail.modelName }}</h2>
-                        <p class="label">{{ currentDetail.label }}</p>
-                        <p class="item-describe">{{ currentDetail.describe }}</p>
-                        <p class="item-modelId">模型ID：{{ currentDetail.modelId }}</p>
+                    <h2 class="modelName">{{ currentDetail.modelName }}</h2>
+                    <p class="label">{{ currentDetail.label }}</p>
+                    <p class="item-describe">{{ currentDetail.describe }}</p>
+                    <p class="item-modelId">模型ID：{{ currentDetail.modelId }}</p>
                 </div>
             </template>
             <div class="session">
                 <h2>模型介绍</h2>
-                <p>{{  currentDetail.describe }}</p>
+                <p>{{ currentDetail.describe }}</p>
             </div>
             <div class="session">
                 <h2>免责声明</h2>
@@ -116,7 +116,16 @@ interface IModelItem {
     updateTime?: string;
 }
 
-const modelParam = ref({
+interface IModelParam {
+    limit: number;
+    order?: string;
+    orderField?: string;
+    page: number,
+    label: string,
+    modelName: string
+}
+
+const modelParam = ref<IModelParam>({
     limit: 5,
     order: 'des',
     orderField: '',
@@ -214,9 +223,8 @@ const gotoDetail = (item: any) => {
     baseService
         .get(`/bot/model/${item.modelId}`)
         .then((res) => {
-            if (res.code === 0) {     
+            if (res.code === 0) {
                 currentDetail.value = res.data;
-                console.log(currentDetail.value)
             }
         });
 }
@@ -308,10 +316,15 @@ const gotoBack = () => {
             margin: 2rem 0;
             flex: 1;
             overflow-y: auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(calc(33.33% - 20px), 1fr));
+            gap: 20px;
 
             .model-item {
-                margin: 10px 0;
+
                 cursor: pointer;
+                margin-left: 0;
+                margin-right: 0;
 
                 .el-card {
                     &:hover {
@@ -334,6 +347,7 @@ const gotoBack = () => {
                         height: 3rem;
                         margin-right: 0.8rem;
                     }
+
                     .item-info {
                         .label {
                             white-space: nowrap;
@@ -371,19 +385,29 @@ const gotoBack = () => {
 
 .model-detail-container {
     line-height: 2;
+
     .card-header p {
         font-size: 0.85rem;
     }
+
     .back {
         margin-bottom: 2rem;
+
         .back-box {
             display: flex;
             align-items: center;
             cursor: pointer;
         }
+
         &:hover {
             background-color: #e8e9eb;
         }
     }
+}
+
+@media screen and (max-width: 1400px) {
+    .main-container .main-right .model-list {
+    grid-template-columns: repeat(auto-fit, minmax(calc(50% - 20px), 1fr));
+  }
 }
 </style>
