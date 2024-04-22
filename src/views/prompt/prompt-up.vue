@@ -34,16 +34,13 @@ const promptRes = ref<IPromptRes>({
   sourceToReasoning: '',
   optimizationToReasoning: ''
 });
-const sourceToOptimizationLoading = ref(false);
-const sourceToReasoningLoading = ref(false);
-const optimizationToReasoningLoading = ref(false);
+const loading = ref(false);
 
 onMounted(() => {
   getManufacturerList();
 })
 
 const getManufacturerList = () => {
-
   baseService
     .get("/prompt/manufacturer")
     .then((res) => {
@@ -57,6 +54,9 @@ const getManufacturerList = () => {
 }
 const judgeParam = () => {
   const { model, prompt } = optimizationParam.value;
+  if (loading.value) {
+    return false;
+  }
   if (!model.trim()) {
     ElMessage.warning('未选择模型！');
     return false;
@@ -70,45 +70,45 @@ const judgeParam = () => {
 const optimizationPrompt = () => {
   if (!judgeParam()) return;
   promptRes.value.source = optimizationParam.value.prompt;
-  sourceToOptimizationLoading.value = true;
+  loading.value = true;
   baseService
     .post("/prompt/optimization", optimizationParam.value)
     .then((res) => {
-      sourceToOptimizationLoading.value = false;
+      loading.value = false;
       if (res.code === 0) {
         promptRes.value.sourceToOptimization = res.data;
       }
-    }).catch(() => sourceToOptimizationLoading.value = false);
+    }).catch(() => loading.value = false);
 }
 
 const reasoningPrompt = () => {
   if (!judgeParam()) return;
-  sourceToReasoningLoading.value = true;
+  loading.value = true;
   baseService
     .post("/prompt/reasoning", {
       model: optimizationParam.value.model,
       prompt: optimizationParam.value.prompt
     })
     .then((res) => {
-      sourceToReasoningLoading.value = false;
+      loading.value = false;
       if (res.code === 0) {
         promptRes.value.sourceToReasoning = res.data;
       }
-    }).catch(() => sourceToReasoningLoading.value = false);
+    }).catch(() => loading.value = false);
 
   if (promptRes.value.sourceToOptimization) {
-    optimizationToReasoningLoading.value = true;
+    loading.value = true;
     baseService
       .post("/prompt/reasoning", {
         model: optimizationParam.value.model,
         prompt: promptRes.value.sourceToOptimization
       })
       .then((res) => {
-        optimizationToReasoningLoading.value = false;
+        loading.value = false;
         if (res.code === 0) {
           promptRes.value.optimizationToReasoning = res.data;
         }
-      }).catch(() => optimizationToReasoningLoading.value = false);
+      }).catch(() => loading.value = false);
   }
 }
 </script>
@@ -121,7 +121,13 @@ const reasoningPrompt = () => {
     </div>
     <el-card class="up-container" shadow="never" style="border: none;">
       <el-row>
-        <el-input type="textarea" :rows="3" v-model="optimizationParam.prompt" maxlength="1500" show-word-limit
+        <el-input 
+          type="textarea" 
+          :rows="3" 
+          v-model="optimizationParam.prompt" 
+          maxlength="1500" 
+          show-word-limit 
+          :disabled="loading"
           placeholder="请输入原始Prompt" />
       </el-row>
       <el-row class="prompt-box">
@@ -171,41 +177,55 @@ const reasoningPrompt = () => {
           </div>
         </div>
         <div class="btns">
-          <el-button type="primary" @click="optimizationPrompt">优化</el-button>
-          <el-button type="primary" @click="reasoningPrompt">推理</el-button>
+          <el-button 
+            type="primary" 
+            @click="optimizationPrompt" 
+            :disabled="loading"
+          >优化</el-button>
+          <el-button 
+            type="primary" 
+            @click="reasoningPrompt"
+            :disabled="loading"
+          >推理</el-button>
         </div>
       </el-row>
       <el-row>
           <div style="width: 100%;" class="card-show" >
             <div  class="card-item card-left">
-              <el-row>
+              <div>
                 <span class="title">原始</span>
-              </el-row>
-              <el-row>
-                <p>Prompt：</p>
-                <p>{{ optimizationParam.prompt }}</p>
-              </el-row>
-              <el-row>
-                <p>推理结果：</p>
-                <p class="result">
-                  <p>{{ promptRes.sourceToReasoning }}</p>
+              </div>
+              <div class="prompt">
+                <p class="prompt-title">Prompt：</p>
+                <p class="text">{{ promptRes.source }}</p>
+              </div>
+              <div class="result">
+                <p class="result-title">推理结果：
                 </p>
-              </el-row>
+                <p class="text">
+                  {{ promptRes.sourceToReasoning }}
+                </p>
+                <p class="tips" v-if="promptRes.sourceToReasoning">AI⽣成内容仅供参考，不代表平台⽴场。</p>
+              </div>
             </div>
             <div  class="card-item card-right">
-              <el-row>
+              <div>
                 <span class="title">优化后</span>
-              </el-row>
-              <el-row>
-                <p>Prompt：</p>
-                <p>{{ promptRes.sourceToOptimization }}</p>
-              </el-row>
-              <el-row>
-                <p>推理结果：</p>
-                <p class="result">
-                  <p>{{ promptRes.optimizationToReasoning }}</p>
+              </div>
+              <div class="prompt">
+                <p class="prompt-title">Prompt：</p>
+                <p class="text">{{ promptRes.sourceToOptimization }}</p>
+                <p class="tips" v-if="promptRes.sourceToOptimization">AI⽣成内容仅供参考，不代表平台⽴场。</p>
+              </div>
+              <div class="result">
+                <p class="result-title">
+                  推理结果：
                 </p>
-              </el-row>
+                <p class="text">
+                  {{ promptRes.optimizationToReasoning }}
+                </p>
+                <p class="tips" v-if="promptRes.optimizationToReasoning">AI⽣成内容仅供参考，不代表平台⽴场。</p>
+              </div>
             </div>
           </div>
       </el-row>
@@ -290,7 +310,7 @@ const reasoningPrompt = () => {
   }
 
   .card-show {
-    height: 500px;
+    min-height: 500px;
     border-radius: 0.5rem;
     box-sizing: border-box;
     border: 1px solid #ddd;
@@ -304,6 +324,25 @@ const reasoningPrompt = () => {
       padding: 2rem;
       .title {
         font-size: 1.5rem;
+      }
+      .title, .result-title, .prompt-title {
+        color: #84868c;
+      }
+      .prompt, .result {
+        margin-top: 2rem;
+      }
+      .text {
+        line-height: 2;
+      }
+      .result {
+        border-top: 1px dashed #a8caff;
+        .result-title {
+          font-size: 1.3rem;
+        }
+      }
+      .tips {
+        font-size: 0.85rem;
+        color: #84868c;
       }
     }
 
