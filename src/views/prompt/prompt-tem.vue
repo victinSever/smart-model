@@ -65,7 +65,7 @@ const getPrompt = () => {
     .get("/prompt/page", promptParam.value)
     .then((res) => {
       if (res.code === 0) {
-        promptMap.value = res.data;
+        // promptMap.value = res.data;
       }
     });
 }
@@ -368,10 +368,13 @@ const copyText = (text: string, item: any, e: MouseEvent) => {
   }
 
   .prompt-list {
+    min-height: 400px;
     margin-top: 1rem;
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(20%, 1fr));
-    gap: 20px;
+    gap: 1.5rem;
+    align-content: start;
+    grid-auto-rows: auto;
 
     .prompt-item {
       margin-left: 0;
