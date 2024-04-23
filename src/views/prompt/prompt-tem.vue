@@ -65,7 +65,7 @@ const getPrompt = () => {
     .get("/prompt/page", promptParam.value)
     .then((res) => {
       if (res.code === 0) {
-        // promptMap.value = res.data;
+         promptMap.value = res.data;
       }
     });
 }

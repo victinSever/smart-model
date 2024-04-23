@@ -34,7 +34,8 @@ const promptRes = ref<IPromptRes>({
   sourceToReasoning: '',
   optimizationToReasoning: ''
 });
-const loading = ref(false);
+const loading1 = ref(false);
+const loading2 = ref(false);
 
 onMounted(() => {
   getManufacturerList();
@@ -54,7 +55,7 @@ const getManufacturerList = () => {
 }
 const judgeParam = () => {
   const { model, prompt } = optimizationParam.value;
-  if (loading.value) {
+  if (loading1.value || loading2.value) {
     return false;
   }
   if (!model.trim()) {
@@ -70,45 +71,45 @@ const judgeParam = () => {
 const optimizationPrompt = () => {
   if (!judgeParam()) return;
   promptRes.value.source = optimizationParam.value.prompt;
-  loading.value = true;
+  loading1.value = true;
   baseService
     .post("/prompt/optimization", optimizationParam.value)
     .then((res) => {
-      loading.value = false;
+      loading1.value = false;
       if (res.code === 0) {
         promptRes.value.sourceToOptimization = res.data;
       }
-    }).catch(() => loading.value = false);
+    }).catch(() => loading1.value = false);
 }
 
 const reasoningPrompt = () => {
   if (!judgeParam()) return;
-  loading.value = true;
+  loading2.value = true;
   baseService
     .post("/prompt/reasoning", {
       model: optimizationParam.value.model,
       prompt: optimizationParam.value.prompt
     })
     .then((res) => {
-      loading.value = false;
+      loading2.value = false;
       if (res.code === 0) {
         promptRes.value.sourceToReasoning = res.data;
       }
-    }).catch(() => loading.value = false);
+    }).catch(() => loading2.value = false);
 
   if (promptRes.value.sourceToOptimization) {
-    loading.value = true;
+    loading2.value = true;
     baseService
       .post("/prompt/reasoning", {
         model: optimizationParam.value.model,
         prompt: promptRes.value.sourceToOptimization
       })
       .then((res) => {
-        loading.value = false;
+        loading2.value = false;
         if (res.code === 0) {
           promptRes.value.optimizationToReasoning = res.data;
         }
-      }).catch(() => loading.value = false);
+      }).catch(() => loading2.value = false);
   }
 }
 </script>
@@ -121,14 +122,8 @@ const reasoningPrompt = () => {
     </div>
     <el-card class="up-container" shadow="never" style="border: none;">
       <el-row>
-        <el-input 
-          type="textarea" 
-          :rows="3" 
-          v-model="optimizationParam.prompt" 
-          maxlength="1500" 
-          show-word-limit 
-          :disabled="loading"
-          placeholder="请输入原始Prompt" />
+        <el-input type="textarea" :rows="3" v-model="optimizationParam.prompt" maxlength="1500" show-word-limit
+          :disabled="loading1 || loading2" placeholder="请输入原始Prompt" />
       </el-row>
       <el-row class="prompt-box">
         <div class="config">
@@ -177,57 +172,52 @@ const reasoningPrompt = () => {
           </div>
         </div>
         <div class="btns">
-          <el-button 
-            type="primary" 
-            @click="optimizationPrompt" 
-            :disabled="loading"
-          >优化</el-button>
-          <el-button 
-            type="primary" 
-            @click="reasoningPrompt"
-            :disabled="loading"
-          >推理</el-button>
+          <el-button type="primary" @click="optimizationPrompt" :disabled="loading1 || loading2">优化</el-button>
+          <el-button type="primary" @click="reasoningPrompt" :disabled="loading1 || loading2">推理</el-button>
         </div>
       </el-row>
       <el-row>
-          <div style="width: 100%;" class="card-show" >
-            <div  class="card-item card-left">
-              <div>
-                <span class="title">原始</span>
-              </div>
-              <div class="prompt">
-                <p class="prompt-title">Prompt：</p>
-                <p class="text">{{ promptRes.source }}</p>
-              </div>
-              <div class="result">
-                <p class="result-title">推理结果：
-                </p>
-                <p class="text">
-                  {{ promptRes.sourceToReasoning }}
-                </p>
-                <p class="tips" v-if="promptRes.sourceToReasoning">AI⽣成内容仅供参考，不代表平台⽴场。</p>
-              </div>
+        <div style="width: 100%;" class="card-show">
+          <div class="card-item card-left">
+            <div>
+              <span class="title">原始</span>
             </div>
-            <div  class="card-item card-right">
-              <div>
-                <span class="title">优化后</span>
-              </div>
-              <div class="prompt">
-                <p class="prompt-title">Prompt：</p>
-                <p class="text">{{ promptRes.sourceToOptimization }}</p>
-                <p class="tips" v-if="promptRes.sourceToOptimization">AI⽣成内容仅供参考，不代表平台⽴场。</p>
-              </div>
-              <div class="result">
-                <p class="result-title">
-                  推理结果：
-                </p>
-                <p class="text">
-                  {{ promptRes.optimizationToReasoning }}
-                </p>
-                <p class="tips" v-if="promptRes.optimizationToReasoning">AI⽣成内容仅供参考，不代表平台⽴场。</p>
-              </div>
+            <div class="prompt">
+              <p class="prompt-title">Prompt：</p>
+              <p class="text">{{ promptRes.source }}</p>
+            </div>
+            <div class="result">
+              <p class="result-title">推理结果：
+              </p>
+              <p class="text" v-loading="loading2" :style="loading2 ? 'min-height: 3rem' : ''">
+                {{ promptRes.sourceToReasoning }}
+              </p>
+              <p class="tips" v-if="promptRes.sourceToReasoning">AI⽣成内容仅供参考，不代表平台⽴场。</p>
             </div>
           </div>
+          <div class="card-item card-right">
+            <div>
+              <span class="title">优化后</span>
+            </div>
+            <div class="prompt">
+              <p class="prompt-title">Prompt：</p>
+              <p class="text" v-loading="loading1" :style="loading1 ? 'min-height: 3rem' : ''">{{
+                promptRes.sourceToOptimization
+                }}</p>
+              <p class="tips" v-if="promptRes.sourceToOptimization">AI⽣成内容仅供参考，不代表平台⽴场。</p>
+            </div>
+            <div class="result">
+              <p class="result-title">
+                推理结果：
+              </p>
+              <p class="text" v-loading="loading2 && promptRes.sourceToOptimization"
+                :style="loading2 && promptRes.sourceToOptimization ? 'min-height: 3rem;' : ''">
+                {{ promptRes.optimizationToReasoning }}
+              </p>
+              <p class="tips" v-if="promptRes.optimizationToReasoning">AI⽣成内容仅供参考，不代表平台⽴场。</p>
+            </div>
+          </div>
+        </div>
       </el-row>
     </el-card>
   </div>
@@ -316,30 +306,40 @@ const reasoningPrompt = () => {
     border: 1px solid #ddd;
     display: flex;
     background-image: url(@/assets/images/prompt-item-bgc.png);
-      background-size: cover;
+    background-size: cover;
 
     .card-item {
       flex: 1;
       height: 100%;
       padding: 2rem;
+
       .title {
         font-size: 1.5rem;
       }
-      .title, .result-title, .prompt-title {
+
+      .title,
+      .result-title,
+      .prompt-title {
         color: #84868c;
       }
-      .prompt, .result {
+
+      .prompt,
+      .result {
         margin-top: 2rem;
       }
+
       .text {
         line-height: 2;
       }
+
       .result {
         border-top: 1px dashed #a8caff;
+
         .result-title {
           font-size: 1.3rem;
         }
       }
+
       .tips {
         font-size: 0.85rem;
         color: #84868c;
