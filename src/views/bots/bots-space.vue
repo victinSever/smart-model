@@ -6,7 +6,8 @@ import { computed, onMounted, ref } from 'vue';
 import { useRouter } from "vue-router";
 import { Search } from '@element-plus/icons-vue';
 import baseService from '@/service/baseService';
-import { ElMessage, ElMessageBox } from "element-plus";
+import { ElMessage, ElMessageBox, UploadProps } from "element-plus";
+import { getToken } from '@/utils/cache';
 
 interface IBotParam {
     limit: number;
@@ -67,7 +68,9 @@ const identityPrompt = ref(`1、建议身份提示文字更加精准、条理、
 2、简短不等于清晰，所以无需过于在意内容的多少，越高质量的身份提示文字将可获得更高质量的AI响应
 3、使用不同的分隔符以区分不同类型的提示内容，以便让 AI 清晰辨别
 4、尽可能提供正确示例，以帮助 AI 正确输出内容
-`)
+`);
+const headers = ref({ token: getToken() });
+const action = ref('https://53r23232p6.goho.co/api/file/upload');
 
 onMounted(() => {
     getBot();
@@ -79,7 +82,6 @@ const getBot = () => {
     baseService
         .get("/bot/botinfo/page", botParam.value)
         .then((res) => {
-            console.log(res)
             if (res.code === 0) {
                 botMap.value = res.data;
             }
@@ -90,7 +92,6 @@ const getModelList = () => {
     baseService
         .get("/bot/model/ModelSecondaryList", botParam.value)
         .then((res) => {
-            console.log(res)
             if (res.code === 0) {
                 modelList.value = res.data;
             }
@@ -104,13 +105,23 @@ const deleteBot = (botId: string) => {
         type: 'warning'
     }).then(() => {
         baseService
-            .get("/bot/botinfo/delete", { ids: [botId] })
+            .delete("/bot/botinfo/delete", { ids: [botId] })
             .then((res) => {
                 if (res.code === 0) {
                     getBot();
                 }
             });
     })
+}
+
+const resetCreateBotParam = () => {
+    createBotParam.value = {
+        name: '',
+        modelId: '',
+        modelName: '',
+        identityPrompt: '',
+        imagePath: ''
+    }
 }
 
 const judgeCreateParam = () => {
@@ -129,8 +140,9 @@ const createBot = () => {
     baseService
         .post("/bot/botinfo/save", createBotParam.value)
         .then((res) => {
-            console.log(res)
             if (res.code === 0) {
+                ElMessage.success('创建成功！');
+                resetCreateBotParam();
                 getBot();
             }
         });
@@ -159,11 +171,32 @@ const changeModelName = (modelId: string) => {
     for (const item of modeListGroup.value) {
         const option = item.options.find((op: any) => op.value === modelId);
         if (option) {
-            createBotParam.value.modelName = option.name;
+            createBotParam.value.modelName = option.label;
             break;
         };
     }
 }
+
+const beforeUpload: UploadProps['beforeUpload'] = (rawFile) => {
+    let types = ['image/jpeg', 'image/jpg', 'image/gif', 'image/bmp', 'image/png'];
+    if (!types.includes(rawFile.type)) {
+        ElMessage.error('上传图片只能是 JPG、JPEG、gif、bmp、PNG 格式!')
+        return false
+    } else if (rawFile.size / 1024 / 1024 > 2) {
+        ElMessage.error('上传图片大小不能超过 2MB!')
+        return false
+    }
+    return true
+
+}
+
+const handleAvatarSuccess: UploadProps['onSuccess'] = ( res ) => {
+    console.log(res)
+    if (res.code === 0) {
+        createBotParam.value.imagePath = res.data;
+    }
+}
+
 
 </script>
 
@@ -244,12 +277,27 @@ const changeModelName = (modelId: string) => {
 
     <el-dialog v-model="dialogVisible" :show-close="true" width="700" title="创建Bot">
         <div class="dialog-container">
-            <div class="dialog-title">
-                <div class="title-logo">
-                    <el-icon>
-                        <DataLine />
-                    </el-icon>
-                </div>
+            <div class="dialog-title">   
+                <el-upload ref="uploadRef" 
+                    class="upload-demo" 
+                    accept=".jpg,.jpeg,.png,.gif.JPG,.JPEG,.PNG,.GIF"
+                    :show-file-list="false"
+                    :before-upload="beforeUpload" 
+                    :on-success="handleAvatarSuccess" 
+                    :action="action"
+                    :headers="headers">
+                    <template #trigger>
+                        <div class="title-logo">                    
+                            <el-image :src="createBotParam.imagePath" v-if="createBotParam.imagePath"></el-image>
+                            <el-icon  class="default-icon"  v-if="!createBotParam.imagePath">
+                                <DataLine/>
+                            </el-icon>
+                            <el-icon class="hover-icon"  v-if="!createBotParam.imagePath">
+                                <EditPen/>
+                            </el-icon>
+                        </div>
+                    </template>
+                </el-upload>
             </div>
             <div>
                 <el-form :model="createBotParam" label-position="left">
@@ -332,6 +380,10 @@ const changeModelName = (modelId: string) => {
                 font-size: 3rem;
                 color: #b1b4bc;
                 overflow: hidden;
+                .el-image {
+                    width: 100%;
+                    height: 100%;
+                }
             }
 
             .item-title {
@@ -407,6 +459,24 @@ const changeModelName = (modelId: string) => {
             justify-content: center;
             align-items: center;
             font-size: 3rem;
+            overflow: hidden;
+            box-sizing: border-box;
+            .hover-icon {
+                display: none;
+            }
+            .el-image {
+                width: 100%;
+                height: 100%;
+            }
+            &:hover {
+                background-color: #464f60;
+                .hover-icon {
+                    display: inline-block;
+                }
+                .default-icon {
+                    display: none;
+                }
+            }
         }
     }
 
