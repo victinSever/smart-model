@@ -1,8 +1,8 @@
 <script setup lang='ts'>
 import baseService from '@/service/baseService';
 import { dataToSelectGroup } from '@/utils/utils';
-import { ElMessage } from 'element-plus';
-import { computed, onMounted, ref } from 'vue';
+import { ElMessage, ElMessageBox } from 'element-plus';
+import { computed, nextTick, onMounted, ref } from 'vue';
 import { useRoute } from "vue-router";
 
 const router = useRoute();
@@ -14,9 +14,10 @@ const identityPrompt = ref(`1、建议身份提示文字更加精准、条理、
 3、使用不同的分隔符以区分不同类型的提示内容，以便让 AI 清晰辨别
 4、尽可能提供正确示例，以帮助 AI 正确输出内容
 `);
-const collapseName = ref('2');
+const collapseName = ref('1');
 const chatInput = ref('');
 const chatHistoryList = ref<Array<{ role: string; content: string; }>>([]);
+const scrollContainer = ref<HTMLElement | null>(null);
 
 onMounted(() => {
   getBot();
@@ -38,7 +39,6 @@ const getBot = () => {
   baseService
     .get(`/bot/botinfo/${botId}`)
     .then((res) => {
-      console.log(res.data)
       if (res.code === 0) {
         botInfo.value = res.data;
         getChatHistory(res.data.botId);
@@ -62,7 +62,6 @@ const updateBot = () => {
   baseService
     .post("/bot/botinfo/update", botInfo.value)
     .then((res) => {
-      console.log(res)
       if (res.code === 0) {
         ElMessage.success('保存成功');
       }
@@ -70,23 +69,24 @@ const updateBot = () => {
 }
 
 
-const submitChat = () => { 
+const submitChat = () => {
+  let chatContent = chatInput.value;
   chatHistoryList.value.push({
     role: 'user',
-    content: chatInput.value
+    content: chatContent
   });
   chatHistoryList.value.push({
     role: 'assistant',
     content: 'loading'
   });
   chatInput.value = '';
+  scrollToBottom();
   baseService
     .post("/bot/chat", {
-      content: chatInput.value,
+      content: chatContent,
       ...botInfo.value
     })
     .then((res) => {
-      console.log(res)
       if (res.code === 0) {
         getChatHistory(botInfo.value.botId);
       }
@@ -97,12 +97,45 @@ const getChatHistory = (id: string) => {
   baseService
     .get(`/bot/chat/history/${id}`)
     .then((res) => {
-      console.log(res.data)
       if (res.code === 0) {
         chatHistoryList.value = res.data;
+        scrollToBottom();
       }
     });
 }
+
+const flushChat = () => {
+  ElMessageBox.confirm('是否清除所有聊天记录？', '提示', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning',
+  })
+    .then(() => {
+      baseService
+        .get(`/bot/chat/flush/${botInfo.value.botId}`)
+        .then((res) => {
+          if (res.code === 0) {
+            getChatHistory(botInfo.value.botId);
+            ElMessage.success('聊天已重置');
+          }
+        });
+    })
+}
+
+const scrollToBottom = () => {
+  nextTick(() => {
+    if (scrollContainer.value) {
+    const content = scrollContainer.value.querySelector('.list-content');
+    if (content) {
+      scrollContainer.value.scrollTo({
+        top: content.scrollHeight,
+        behavior: 'smooth'
+      });
+    }
+  }
+  }) 
+};
+
 
 </script>
 
@@ -354,20 +387,39 @@ const getChatHistory = (id: string) => {
           <p class="top-title" style="font-size: 1.2rem;">调试</p>
           <div class="top-header-btns">
             <el-tooltip class="box-item" effect="dark" content="重置会话" placement="top">
-              <el-icon>
-                <DeleteFilled />
-              </el-icon>
+              <span @click="flushChat">
+                <el-icon>
+                  <DeleteFilled />
+                </el-icon>
+              </span>
             </el-tooltip>
           </div>
         </div>
       </div>
-      <div class="chat-content">
+      <div class="chat-content" ref="scrollContainer">
         <div class="list-content">
           <div :class="['session-item', { 'session-user': item.role === 'user' }]" v-for="item in chatHistoryList">
             <div class="item-user">
-              <el-icon>
-                  <DataLine/>
-              </el-icon>
+              <svg v-if="item.role !== 'user'" t="1713974680474" class="icon" viewBox="0 0 1024 1024" version="1.1"
+                xmlns="http://www.w3.org/2000/svg" p-id="4345" xmlns:xlink="http://www.w3.org/1999/xlink" width="200"
+                height="200">
+                <path
+                  d="M789.333333 938.666667H234.666667c-36.266667 0-64-27.733333-64-64V405.333333c0-36.266667 27.733333-64 64-64h554.666666c36.266667 0 64 27.733333 64 64v469.333334c0 36.266667-27.733333 64-64 64zM234.666667 384c-12.8 0-21.333333 8.533333-21.333334 21.333333v469.333334c0 12.8 8.533333 21.333333 21.333334 21.333333h554.666666c12.8 0 21.333333-8.533333 21.333334-21.333333V405.333333c0-12.8-8.533333-21.333333-21.333334-21.333333H234.666667z"
+                  fill="#333333" p-id="4346"></path>
+                <path
+                  d="M597.333333 384c-4.266667 0-8.533333 0-10.666666-4.266667-10.666667-6.4-12.8-19.2-6.4-29.866666l106.666666-170.666667c6.4-10.666667 19.2-12.8 29.866667-6.4 10.666667 6.4 12.8 19.2 6.4 29.866667l-106.666667 170.666666c-4.266667 6.4-12.8 10.666667-19.2 10.666667zM426.666667 384c-6.4 0-14.933333-4.266667-17.066667-10.666667l-106.666667-170.666666c-6.4-10.666667-4.266667-23.466667 6.4-29.866667 10.666667-6.4 23.466667-4.266667 29.866667 6.4l106.666667 170.666667c6.4 10.666667 4.266667 23.466667-6.4 29.866666-4.266667 4.266667-8.533333 4.266667-12.8 4.266667z"
+                  fill="#333333" p-id="4347"></path>
+                <path
+                  d="M725.333333 213.333333c-36.266667 0-64-27.733333-64-64s27.733333-64 64-64 64 27.733333 64 64-27.733333 64-64 64z m0-85.333333c-12.8 0-21.333333 8.533333-21.333333 21.333333s8.533333 21.333333 21.333333 21.333334 21.333333-8.533333 21.333334-21.333334-8.533333-21.333333-21.333334-21.333333zM298.666667 213.333333c-36.266667 0-64-27.733333-64-64s27.733333-64 64-64 64 27.733333 64 64-27.733333 64-64 64z m0-85.333333c-12.8 0-21.333333 8.533333-21.333334 21.333333s8.533333 21.333333 21.333334 21.333334 21.333333-8.533333 21.333333-21.333334-8.533333-21.333333-21.333333-21.333333zM597.333333 704h-170.666666c-59.733333 0-106.666667-46.933333-106.666667-106.666667s46.933333-106.666667 106.666667-106.666666h170.666666c59.733333 0 106.666667 46.933333 106.666667 106.666666s-46.933333 106.666667-106.666667 106.666667z m-170.666666-170.666667c-36.266667 0-64 27.733333-64 64s27.733333 64 64 64h170.666666c36.266667 0 64-27.733333 64-64s-27.733333-64-64-64h-170.666666zM192 746.666667H85.333333c-12.8 0-21.333333-8.533333-21.333333-21.333334V512c0-12.8 8.533333-21.333333 21.333333-21.333333h106.666667c12.8 0 21.333333 8.533333 21.333333 21.333333s-8.533333 21.333333-21.333333 21.333333H106.666667v170.666667h85.333333c12.8 0 21.333333 8.533333 21.333333 21.333333s-8.533333 21.333333-21.333333 21.333334zM938.666667 746.666667h-106.666667c-12.8 0-21.333333-8.533333-21.333333-21.333334s8.533333-21.333333 21.333333-21.333333h85.333333v-170.666667h-85.333333c-12.8 0-21.333333-8.533333-21.333333-21.333333s8.533333-21.333333 21.333333-21.333333h106.666667c12.8 0 21.333333 8.533333 21.333333 21.333333v213.333333c0 12.8-8.533333 21.333333-21.333333 21.333334z"
+                  fill="#333333" p-id="4348">
+                </path>
+              </svg>
+              <svg v-else t="1713974796339" class="icon" viewBox="0 0 1024 1024" version="1.1"
+                xmlns="http://www.w3.org/2000/svg" p-id="5327" width="200" height="200">
+                <path
+                  d="M956.098517 789.181927c-14.806217-42.936905-63.826678-49.086975-104.791671-66.37471-44.98761-18.957771-94.855368-40.97625-139.734508-59.392692-12.80463-3.481288-25.620517-6.982018-38.425148-10.475586-15.286148-10.522658-30.250978-45.488007-38.425148-62.873979-8.15268-1.159406-16.296151-2.320858-24.459065-3.481288 1.25969-26.900673 17.906835-28.351722 24.459065-48.898687 5.763261-18.138102 0.592494-41.697681 9.733689-58.472739 6.343475-11.645225 20.678972-11.735275 27.841092-21.719674 6.503111-9.073656 10.784624-24.870434 12.80463-35.985586 3.702322-20.287045 6.922666-48.066739-2.710738-68.185962-5.542226-11.573593-9.042957-12.673647-10.584056-26.720571-1.870604-17.007349 5.021364-72.499198 5.302773-84.492346 0.700965-31.132044-0.049119-33.653471-7.582699-63.97608 0 0-9.154497-27.470655-23.48897-35.743062l-28.580942-4.92108-17.667382-16.367783c-71.179133-43.805692-147.499355-13.07376-188.365088 3.483334-58.903551 19.107173-96.137571 76.788897-70.136384 199.9878 4.442172 21.039175-11.524474 30.451546-10.483772 41.926902 2.279926 25.120121 2.77009 85.48393 26.499537 100.358709 2.200108 1.370207 19.027355 5.593392 18.918885 4.442172 2.329045 24.450878 4.66116 48.919153 6.982018 73.359798 5.931083 16.255219 20.137643 18.037818 24.267706 40.986483l-18.185174 4.421706c-8.175193 17.385972-23.149233 52.351322-38.435381 62.873979-12.80463 3.493567-25.620517 6.994298-38.414915 10.475586-44.887326 18.416442-94.757131 40.434921-139.744741 59.392692-40.955784 17.287735-89.985454 23.437805-104.802928 66.37471 0 29.16218-2.739391 98.038874-1.989307 136.234801l391.601886 0 28.752858-196.35711-23.899316-50.439786 55.17053-26.452465 46.479591 25.911136-25.620517 51.940976 45.307905 195.396225 374.406249 0C958.858374 887.2208 956.098517 818.344107 956.098517 789.181927z"
+                  fill="#AFAFAF" p-id="5328"></path>
+              </svg>
             </div>
             <div class="item-main">
               <!-- <div class="item-time">time</div> -->
@@ -378,10 +430,13 @@ const getChatHistory = (id: string) => {
         </div>
       </div>
       <div class="input-content">
-        <el-input placeholder="请输入消息" v-model="chatInput" maxlength="200" :show-word-limit="true" @keydown.enter="submitChat">
+        <el-input placeholder="请输入消息" v-model="chatInput" maxlength="200" :show-word-limit="true"
+          @keydown.enter="submitChat">
           <template #suffix>
             <div class="input-suffix" @click="submitChat">
-                <el-icon><Position /></el-icon>
+              <el-icon>
+                <Position />
+              </el-icon>
             </div>
           </template>
         </el-input>
@@ -393,11 +448,19 @@ const getChatHistory = (id: string) => {
 <style scoped lang="scss">
 .container {
   border: 1px solid #ddd;
-  min-height: 795px;
+  height: 795px;
+  max-height: 795px;
+  overflow: hidden;
 
   .left-container {
     padding: 0 1rem;
     border-right: 1px solid #ddd;
+    height: 100%;
+    overflow-y: auto;
+
+    &::-webkit-scrollbar {
+      width: 2px;
+    }
 
     .label-box,
     .collapse-item-title {
@@ -458,25 +521,39 @@ const getChatHistory = (id: string) => {
     padding: 0 1rem;
     display: flex;
     flex-direction: column;
+    height: 100%;
+
     .chat-content {
       flex: 1;
       border-top: 1px solid #ddd;
+
+      overflow-y: auto;
+
+      &::-webkit-scrollbar {
+        width: 0;
+      }
+
       .list-content {
         .session-item {
           margin: 1rem 0;
           display: flex;
           width: 100%;
+
           .item-user {
             width: 2rem;
+            min-width: 2rem;
             height: 2rem;
             border-radius: 0.5rem;
             display: flex;
             justify-content: center;
             align-items: center;
             background-color: #f7f7fa;
+            font-size: 0.85rem;
           }
+
           .item-main {
             margin: 0 0.5rem;
+
             .item-content {
               padding: 0.5rem 0.8rem;
               background-color: #f7f7fa;
@@ -485,18 +562,22 @@ const getChatHistory = (id: string) => {
             }
           }
         }
+
         .session-user {
           flex-direction: row-reverse
         }
       }
     }
+
     .input-content {
       height: 4rem;
       display: flex;
       align-items: center;
+
       .el-input {
         height: 3rem;
       }
+
       .input-suffix {
         height: 80%;
         display: flex;
@@ -505,9 +586,10 @@ const getChatHistory = (id: string) => {
         padding: 0.3px 0.5rem;
         border-radius: 0.5rem;
         color: #485162;
+
         &:hover {
-              background-color: #d9d9e7;
-            } 
+          background-color: #d9d9e7;
+        }
       }
     }
   }
@@ -516,6 +598,24 @@ const getChatHistory = (id: string) => {
     height: 3rem;
     line-height: 3rem;
     margin-bottom: 2rem;
+
+    .top-header-btns {
+      span {
+        display: inline-block;
+        padding: 0 1rem;
+        border-radius: 0.5rem;
+        cursor: pointer;
+        font-size: 1.2rem;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 2.5rem;
+
+        &:hover {
+          background-color: #d9d9e7;
+        }
+      }
+    }
 
     &>div {
       display: flex;
