@@ -8,6 +8,7 @@ import { Search } from '@element-plus/icons-vue';
 import baseService from '@/service/baseService';
 import { ElMessage, ElMessageBox, UploadProps } from "element-plus";
 import { getToken } from '@/utils/cache';
+import { dataToSelectGroup } from '@/utils/utils';
 
 interface IBotParam {
     limit: number;
@@ -52,18 +53,8 @@ const createBotParam = ref<ICreateBotParam>({
     identityPrompt: '',
     imagePath: ''
 });
-const modelList = ref<any>([]);
-const modeListGroup = computed(() => Object.keys(modelList.value).map(key => {
-    return {
-        label: key,
-        options: modelList.value[key].map((item: any) => {
-            return {
-                value: item.modelId,
-                label: item.modelName
-            }
-        })
-    }
-}));
+const modelList = ref<any>();
+const modeListGroup = computed(() => dataToSelectGroup(modelList.value));
 const identityPrompt = ref(`1、建议身份提示文字更加精准、条理、清晰和逻辑
 2、简短不等于清晰，所以无需过于在意内容的多少，越高质量的身份提示文字将可获得更高质量的AI响应
 3、使用不同的分隔符以区分不同类型的提示内容，以便让 AI 清晰辨别
@@ -190,7 +181,7 @@ const beforeUpload: UploadProps['beforeUpload'] = (rawFile) => {
 
 }
 
-const handleAvatarSuccess: UploadProps['onSuccess'] = ( res ) => {
+const handleAvatarSuccess: UploadProps['onSuccess'] = (res) => {
     console.log(res)
     if (res.code === 0) {
         createBotParam.value.imagePath = res.data;
@@ -229,7 +220,7 @@ const handleAvatarSuccess: UploadProps['onSuccess'] = ( res ) => {
                                         <DataLine />
                                     </el-icon>
                                 </div>
-                                <div class="item-title" v-text="item.name"></div>
+                                <div class="item-title" v-text="item.botName"></div>
                             </el-row>
                             <el-row class="item-bottom">
                                 <div class="item-bottom-left">
@@ -237,7 +228,7 @@ const handleAvatarSuccess: UploadProps['onSuccess'] = ( res ) => {
                                         <el-icon>
                                             <Coin />
                                         </el-icon>
-                                        <span>{{ item.name }}</span>
+                                        <span>{{ item.botName }}</span>
                                     </div>
                                     <div class="item-count">
                                         <el-icon>
@@ -277,23 +268,18 @@ const handleAvatarSuccess: UploadProps['onSuccess'] = ( res ) => {
 
     <el-dialog v-model="dialogVisible" :show-close="true" width="700" title="创建Bot">
         <div class="dialog-container">
-            <div class="dialog-title">   
-                <el-upload ref="uploadRef" 
-                    class="upload-demo" 
-                    accept=".jpg,.jpeg,.png,.gif.JPG,.JPEG,.PNG,.GIF"
-                    :show-file-list="false"
-                    :before-upload="beforeUpload" 
-                    :on-success="handleAvatarSuccess" 
-                    :action="action"
-                    :headers="headers">
+            <div class="dialog-title">
+                <el-upload ref="uploadRef" class="upload-demo" accept=".jpg,.jpeg,.png,.gif.JPG,.JPEG,.PNG,.GIF"
+                    :show-file-list="false" :before-upload="beforeUpload" :on-success="handleAvatarSuccess"
+                    :action="action" :headers="headers">
                     <template #trigger>
-                        <div class="title-logo">                    
+                        <div class="title-logo">
                             <el-image :src="createBotParam.imagePath" v-if="createBotParam.imagePath"></el-image>
-                            <el-icon  class="default-icon"  v-if="!createBotParam.imagePath">
-                                <DataLine/>
+                            <el-icon class="default-icon" v-if="!createBotParam.imagePath">
+                                <DataLine />
                             </el-icon>
-                            <el-icon class="hover-icon"  v-if="!createBotParam.imagePath">
-                                <EditPen/>
+                            <el-icon class="hover-icon" v-if="!createBotParam.imagePath">
+                                <EditPen />
                             </el-icon>
                         </div>
                     </template>
@@ -380,6 +366,7 @@ const handleAvatarSuccess: UploadProps['onSuccess'] = ( res ) => {
                 font-size: 3rem;
                 color: #b1b4bc;
                 overflow: hidden;
+
                 .el-image {
                     width: 100%;
                     height: 100%;
@@ -387,9 +374,13 @@ const handleAvatarSuccess: UploadProps['onSuccess'] = ( res ) => {
             }
 
             .item-title {
+                flex: 1;
                 font-size: 1.2rem;
                 line-height: 1.5;
                 font-weight: bold;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
             }
         }
 
@@ -409,6 +400,10 @@ const handleAvatarSuccess: UploadProps['onSuccess'] = ( res ) => {
 
                     span {
                         margin-left: 0.3rem;
+                        overflow: hidden;
+                        text-overflow: ellipsis;
+                        white-space: nowrap;
+                        max-width: 8rem;
                     }
                 }
             }
@@ -461,18 +456,23 @@ const handleAvatarSuccess: UploadProps['onSuccess'] = ( res ) => {
             font-size: 3rem;
             overflow: hidden;
             box-sizing: border-box;
+
             .hover-icon {
                 display: none;
             }
+
             .el-image {
                 width: 100%;
                 height: 100%;
             }
+
             &:hover {
                 background-color: #464f60;
+
                 .hover-icon {
                     display: inline-block;
                 }
+
                 .default-icon {
                     display: none;
                 }

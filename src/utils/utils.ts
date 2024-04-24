@@ -1,6 +1,6 @@
-import {IFunction, IObject} from "@/types/interface";
-import {debounce, DebouncedFunc, DebounceSettings} from "lodash";
-import type {App, Plugin} from "vue";
+import { IFunction, IObject } from "@/types/interface";
+import { debounce, DebouncedFunc, DebounceSettings } from "lodash";
+import type { App, Plugin } from "vue";
 
 /**
  * 获取对象下的字段值
@@ -41,7 +41,7 @@ export const arrayToObject = (
  * @returns
  */
 export const arrayToKeyValueArray = (rs: any[] = [], render?: IFunction): any[] => {
-  return rs.map((x) => (render ? render(x) : typeof x === "object" ? x : {label: x, value: x}));
+  return rs.map((x) => (render ? render(x) : typeof x === "object" ? x : { label: x, value: x }));
 };
 
 /**
@@ -275,4 +275,19 @@ export const copyTextToClipboard = (text: string): boolean => {
 
   document.body.removeChild(textarea); // 移除临时的textarea元素
   return success;
+}
+
+export const dataToSelectGroup = (data: Record<string, any>) => {
+  if(!data) return [];
+  return Object.keys(data).map((key: string) => {
+    return {
+      label: key,
+      options: data[key].map((item: any) => {
+        return {
+          value: item.modelId,
+          label: item.modelName
+        }
+      })
+    }
+  })
 }
