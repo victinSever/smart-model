@@ -81,10 +81,29 @@ const submitChat = () => {
   });
   chatInput.value = '';
   scrollToBottom();
+  const value = botInfo.value;
   baseService
     .post("/bot/chat", {
+      botId: value.botId,
+	    modelId: value.modelId,
+	    knowledgeBaseId: value.knowledgeBaseId,
       content: chatContent,
-      ...botInfo.value
+      botName: value.botName,
+      describe: value.describe,
+      identityPrompt: value.identityPrompt,
+      suggestionFlag: value.suggestionFlag,
+      temperature: value.temperature,
+      memoryConfig: {
+        flag: value.memoryFlag || false,
+        memoryStrategy: value.memoryStrategy
+      },
+      knowledgeConfig: {
+        flag: value.knowledgeFlag || false,
+        relativity: value.relativity,
+        matchingQuantity: value.matchingQuantity,
+        knowledgeNull: value.knowledgeNull || 0,
+        knowledgeDisplaySwitch: value.knowledgeDisplaySwitch,
+      }
     })
     .then((res) => {
       if (res.code === 0) {
@@ -162,7 +181,7 @@ const scrollToBottom = () => {
           <el-card class="bot-config" shadow="never">
             <el-form :model="botInfo" label-position="left" label-width="160px">
               <el-form-item label="bot名称（LLM）">
-                <el-input name="name" placeholder="Bot名称" v-model="botInfo.name"></el-input>
+                <el-input name="name" placeholder="Bot名称" v-model="botInfo.botName"></el-input>
               </el-form-item>
               <el-form-item label="大语言模型（LLM）">
                 <el-select name="modelName" v-model="botInfo.modelId" placeholder="请选择" @change="changeModelName"
@@ -212,6 +231,14 @@ const scrollToBottom = () => {
           </template>
           <el-card class="bot-config" shadow="never">
             <el-form :model="botInfo" label-position="left" label-width="160px">
+              <el-form-item>
+                <template #label>
+                  <div class="label-box">
+                    <span>是否开启知识库设置</span>
+                  </div>                
+                </template>
+                <el-switch v-model="botInfo.knowledgeFlag"></el-switch>
+              </el-form-item>
               <el-form-item>
                 <template #label>
                   <div class="label-box">
@@ -266,6 +293,10 @@ const scrollToBottom = () => {
                     </el-tooltip>
                   </div>
                 </template>
+                <div class="content-box">
+                  <span v-if="botInfo.knowledgeNull && botInfo.knowledgeNull === 1">LLM响应</span>
+                  <span v-else>正常返回</span>
+                </div>
               </el-form-item>
               <el-form-item>
                 <template #label>
@@ -297,24 +328,13 @@ const scrollToBottom = () => {
           </template>
           <el-card class="bot-config" shadow="never">
             <el-form :model="botInfo" label-position="left" label-width="160px">
-
               <el-form-item>
                 <template #label>
                   <div class="label-box">
-                    <span>长期记忆</span>
-                    <el-tooltip effect="dark" placement="right">
-                      <template #content>
-                        <div>开启后，将把短期记<br />
-                          忆之前的聊天记录进行向量化存储，匹配与用户问题<br />
-                          相关的记录，作为上下文帮助 Bot 提<br />
-                          升响应质量。</div>
-                      </template>
-                      <el-icon>
-                        <BellFilled />
-                      </el-icon>
-                    </el-tooltip>
-                  </div>
+                    <span>是否开启记忆设置</span>
+                  </div>                
                 </template>
+                <el-switch v-model="botInfo.memoryFlag"></el-switch>
               </el-form-item>
               <el-form-item>
                 <template #label>
