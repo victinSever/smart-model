@@ -451,6 +451,7 @@ const handleAvatarSuccess: UploadProps['onSuccess'] = (res) => {
   position: relative;
 
   .bottom-btns {
+    background-color: #fff;
     border-top: 1px solid #ddd;
     padding-top: 1.5rem;
     width: 100%;
@@ -470,6 +471,7 @@ const handleAvatarSuccess: UploadProps['onSuccess'] = (res) => {
 .main {
   width: 100%;
   display: flex;
+  padding-bottom: 3rem;
 
   .left {
     flex: 3;
@@ -521,6 +523,7 @@ const handleAvatarSuccess: UploadProps['onSuccess'] = (res) => {
     .right-card {
       width: 100%;
       background-color: #f6f8fa;
+      margin-bottom: 1rem;
 
       .card-top {
         display: flex;
