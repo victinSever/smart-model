@@ -71,9 +71,10 @@ import { ElMessage } from "element-plus";
 import { getUuid } from "@/utils/utils";
 import app from "@/constants/app";
 import { useAppStore } from "@/store";
-import { useRouter } from "vue-router";
+import { useRouter, useRoute } from "vue-router";
 
 const store = useAppStore();
+const route = useRoute();
 const router = useRouter();
 const activeName = ref('first')
 const state = reactive({
@@ -89,6 +90,9 @@ onMounted(() => {
   //清理数据
   store.logout();
   getCaptchaUrl();
+  if(route.query.isRegister) {
+    activeName.value = 'second';
+  }
 });
 const formRef = ref();
 
@@ -118,7 +122,7 @@ const onLogin = () => {
           if (res.code === 0) {
             setCache(CacheToken, res.data, true);
             ElMessage.success("登录成功");
-            router.push("/");
+            router.push("/index");
           } else {
             ElMessage.error(res.msg);
           }

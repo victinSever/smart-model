@@ -45,7 +45,10 @@ export default defineComponent({
 });
 </script>
 <template>
-  <el-config-provider>
+  <div v-if="$route.meta.isIndex">
+      <router-view></router-view>
+    </div>
+  <el-config-provider v-else>
     <div v-if="!store.state.appIsRender" v-loading="true" :element-loading-fullscreen="true" :element-loading-lock="true" style="width: 100vw; height: 100vh; position: absolute; top: 0; left: 0; z-index: 99999; background: #fff"></div>
     <template v-if="store.state.appIsReady">
       <layout v-if="state.layout === pageTag"> </layout>
