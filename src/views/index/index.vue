@@ -1,13 +1,14 @@
 <script setup lang='ts'>
 import { computed, ref } from 'vue';
 import IndexHeader from "./components/index-header.vue";
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 const route = useRoute();
+const router = useRouter();
 const footerList = ref([
   ['特性', '构建和训练 AI Bot', '更精准的知识库', '更可控的 LLMs', '更强大的 Agents'],
   ['解决方案', 'SEO写作', '售前客户线索', '售后客户服务', '数据分析'],
   ['资源', '使用教程', 'API 文档', '最佳实践', '博客'],
-  ['公司', '关于我', '合作伙伴'],
+  ['公司', '关于我们', '合作伙伴'],
 ]);
 const isIndex = computed(() => route.name === 'index');
 </script>
@@ -22,7 +23,7 @@ const isIndex = computed(() => route.name === 'index');
           <p class="desc">GPTBots 是一个强大的无代码平台，用于创建 AI 驱动的商业应用程序。
           </p>
           <div class="start">
-            <el-button style="background-color: #24293d; color: #fff;" round>开始使用</el-button>
+            <el-button style="background-color: #24293d; color: #fff;" round @click="router.push('/login')">开始使用</el-button>
           </div>
         </div>
         <video class="video" src="https://static.gptbots.cc/aigc/d/website/2024/_nuxt/home-mobile.17559f06.mp4" autoplay
