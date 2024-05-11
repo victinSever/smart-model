@@ -26,7 +26,7 @@ const botMap = ref<{
   total: 0
 });
 const botTmp = ref('1');
-const dateTimeRange = ref(['2024-03-31','2024-05-31']);
+const dateTimeRange = ref(['2024-03-31', '2024-05-31']);
 
 onMounted(() => {
   getBotList();
@@ -82,11 +82,11 @@ const shortcuts = [
 ]
 
 const dateRangeChange = (value: string) => {
-  if(value) {
+  if (value) {
     botParam.value.startTime = moment(value[0]).format("YYYY-MM-DD");
     botParam.value.endTime = moment(value[1]).format("YYYY-MM-DD");
     getBotList();
-  } 
+  }
 }
 
 </script>
@@ -97,13 +97,18 @@ const dateRangeChange = (value: string) => {
       <h2 class="top-title">聊天记录</h2>
     </div>
     <div class="">
-      <el-row class="banner" style="margin-bottom: 1rem;">
-        <el-input style="width: 240px; margin-right: 1rem;" v-model="botParam.content" placeholder="根据内容检索" @change="getBotList"></el-input>
-        <el-date-picker v-model="dateTimeRange" type="daterange" :shortcuts="shortcuts" range-separator="~"
-          start-placeholder="开始时间" end-placeholder="结束时间" @change="dateRangeChange" style="width: 240px; margin-right: 1rem;"/>
-      </el-row>
+
       <el-tabs v-model="botTmp" class="tab-container">
         <el-tab-pane label="对话记录" name="1">
+          <el-row class="banner" style="margin: 1rem 0 2rem 0;">
+            <el-input style="width: 240px; margin-right: 1rem;" v-model="botParam.content" placeholder="根据内容检索"
+              @change="getBotList" suffix-icon="Search"></el-input>
+            <div>
+              <el-date-picker v-model="dateTimeRange" type="daterange" :shortcuts="shortcuts" range-separator="~"
+              start-placeholder="开始时间" end-placeholder="结束时间" @change="dateRangeChange"
+              style="width: 240px; margin-right: 1rem;" />
+            </div>
+          </el-row>
           <el-table :data="botMap.list" style="width: 100%">
             <el-table-column type="index" label="序号" width="70" fixed align="center" />
             <el-table-column prop="updateTime" label="最近对话时间" width="160" />
