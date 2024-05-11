@@ -182,7 +182,6 @@ const beforeUpload: UploadProps['beforeUpload'] = (rawFile) => {
 }
 
 const handleAvatarSuccess: UploadProps['onSuccess'] = (res) => {
-    console.log(res)
     if (res.code === 0) {
         createBotParam.value.imagePath = res.data;
     }

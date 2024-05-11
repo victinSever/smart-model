@@ -15,7 +15,6 @@ const header = ref({
 })
 
 const beforeUpload: UploadProps['beforeUpload'] = (rawFile) => {
-    console.log(rawFile)
     if (!['image/jpeg', 'image/png'].includes(rawFile.type)) {
         ElMessage.error('格式不正确，上传必须是图片类型!')
         return false

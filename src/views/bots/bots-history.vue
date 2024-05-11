@@ -122,9 +122,6 @@ const dateRangeChange = (value: string) => {
         :page-sizes="[5, 10, 20, 50]" :small="true" :background="false" layout="total, sizes, prev, pager, next, jumper"
         :total="botMap.total" @size-change="handleSizeChange" @current-change="handleCurrentChange" />
     </div>
-    <div>
-
-    </div>
   </div>
 </template>
 

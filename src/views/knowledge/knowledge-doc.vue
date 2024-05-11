@@ -89,7 +89,6 @@ const updateSplit = () => {
       type: parseInt(queryParam.value.type),
     })
     .then((res) => {
-      console.log(res)
       if (res.code === 0) {
         splitList.value = res.data;
       }

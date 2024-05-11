@@ -179,7 +179,6 @@ const getModel = () => {
     baseService
         .get("/bot/model/page", modelParam.value)
         .then((res) => {
-            console.log(res)
             if (res.code === 0) {
                 modelMap.value = res.data;
             }

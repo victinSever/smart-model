@@ -131,8 +131,7 @@ const onLogin = () => {
   });
 };
 
-const onRegist = () => {
-  
+const onRegist = () => {  
   formRef.value.validate((valid: boolean) => {
     if (valid) {
       if (regist.password !== regist.confirmPassword) {
@@ -142,7 +141,6 @@ const onRegist = () => {
       baseService
         .post("/regist", regist)
         .then((res) => {
-          console.log(res)
           if (res.code === 0) {
             activeName.value = 'first'
             ElMessage.success("注册成功");

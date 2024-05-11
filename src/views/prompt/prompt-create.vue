@@ -49,7 +49,6 @@ const getPromptCate = () => {
     baseService
         .get("/prompt/category")
         .then((res) => {
-            console.log(res.data)
             if (res.code === 0) {
                 promptCate.value = res.data.category;
             }
@@ -60,7 +59,6 @@ const createPrompt = () => {
     baseService
         .post("/prompt/save", promptParam.value)
         .then((res) => {
-            console.log(res.data)
             if (res.code === 0) {
                 router.push({ path: '/prompt/prompt-tem' })
                 ElMessage.success('创建成功');
