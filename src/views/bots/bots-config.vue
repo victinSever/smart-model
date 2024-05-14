@@ -18,6 +18,7 @@ const collapseName = ref('1');
 const chatInput = ref('');
 const chatHistoryList = ref<Array<{ role: string; content: string; }>>([]);
 const scrollContainer = ref<HTMLElement | null>(null);
+const loading = ref(false);
 
 onMounted(() => {
   getBot();
@@ -70,6 +71,8 @@ const updateBot = () => {
 
 
 const submitChat = () => {
+  if(loading.value) return;
+
   let chatContent = chatInput.value;
   chatHistoryList.value.push({
     role: 'user',
@@ -79,6 +82,7 @@ const submitChat = () => {
     role: 'assistant',
     content: 'loading'
   });
+  loading.value = true;
   chatInput.value = '';
   scrollToBottom();
   const value = botInfo.value;
@@ -106,10 +110,11 @@ const submitChat = () => {
       }
     })
     .then((res) => {
+      loading.value = false;
       if (res.code === 0) {
         getChatHistory(botInfo.value.botId);
       }
-    });
+    }).catch(() => loading.value = false);
 }
 
 const getChatHistory = (id: string) => {
@@ -450,10 +455,10 @@ const scrollToBottom = () => {
         </div>
       </div>
       <div class="input-content">
-        <el-input placeholder="请输入消息" v-model="chatInput" maxlength="200" :show-word-limit="true"
+        <el-input placeholder="请输入消息" v-model="chatInput" maxlength="200" :show-word-limit="true" :disabled="loading"
           @keydown.enter="submitChat">
           <template #suffix>
-            <div class="input-suffix" @click="submitChat">
+            <div :class="['input-suffix', { 'disabled': loading }]" @click="submitChat">
               <el-icon>
                 <Position />
               </el-icon>
@@ -609,6 +614,12 @@ const scrollToBottom = () => {
 
         &:hover {
           background-color: #d9d9e7;
+        }
+      }
+      .disabled {
+        &:hover {
+          background-color: transparent;
+          cursor: not-allowed;
         }
       }
     }
