@@ -40,15 +40,6 @@
               <el-form-item label-width="0" prop="username">
                 <el-input v-model="regist.username" placeholder="用户名" prefix-icon="user" autocomplete="off"></el-input>
               </el-form-item>
-              <el-form-item label-width="0" prop="email">
-                <el-input v-model="regist.email" type="email" placeholder="邮箱" prefix-icon="box" autocomplete="off"></el-input>
-              </el-form-item>
-              <el-form-item label-width="0" prop="email">
-                <div style="display: flex;" class="email-pass">
-                  <el-input v-model="registEmailPass.input" placeholder="验证码"></el-input>
-                  <el-button type="primary" :disabled="!isValidatEmail" @click="onSendEmail">发送验证码</el-button>
-                </div>
-              </el-form-item>
               <el-form-item label-width="0" prop="password">
                 <el-input placeholder="密码" v-model="regist.password" prefix-icon="lock" autocomplete="off"
                   show-password></el-input>
@@ -56,6 +47,18 @@
               <el-form-item label-width="0" prop="confirmPassword">
                 <el-input placeholder="确认密码" v-model="regist.confirmPassword" prefix-icon="lock" autocomplete="off"
                   show-password></el-input>
+              </el-form-item>
+              <el-form-item label-width="0" prop="email">
+                <el-input v-model="regist.email" type="email" placeholder="邮箱" prefix-icon="box" autocomplete="off"></el-input>
+              </el-form-item>
+              <el-form-item label-width="0">
+                <div style="display: flex;" class="email-pass">
+                  <el-input v-model="registEmailPass.input" placeholder="验证码"></el-input>
+                  <el-button type="primary" :disabled="!isValidatEmail || registEmailPass.countTime" @click="onSendEmail" v-loading="registEmailPass.loading">
+                    <span v-if="registEmailPass.countTime === 0">发送验证码</span>
+                    <span v-else>{{ registEmailPass.countTime }}s</span>
+                  </el-button>
+                </div>
               </el-form-item>
               <el-form-item label-width="0">
                 <el-button type="primary" size="small" :disabled="state.loading" @click="onRegist" style="margin-top: 0px;"
@@ -67,22 +70,14 @@
         <el-tab-pane label="重置密码" name="third">
           <div class="rr-login-right-main">
             <h4 class="rr-login-right-main-title">重置密码</h4>
-            <el-form ref="formRef" label-width="80px" :status-icon="true" :model="regist" :rules="rules"
+            <el-form ref="formRefForReset" label-width="80px" :status-icon="true" :model="reset" :rules="rulesForRigister"
               @keyup.enter="onRegist">
               <el-form-item label-width="0" prop="username">
-                <el-input v-model="regist.username" placeholder="用户名" prefix-icon="user" autocomplete="off"></el-input>
-              </el-form-item>
-              <el-form-item label-width="0" prop="password">
-                <el-input placeholder="密码" v-model="regist.password" prefix-icon="lock" autocomplete="off"
-                  show-password></el-input>
-              </el-form-item>
-              <el-form-item label-width="0" prop="confirmPassword">
-                <el-input placeholder="确认密码" v-model="regist.confirmPassword" prefix-icon="lock" autocomplete="off"
-                  show-password></el-input>
+                <el-input v-model="reset.username" placeholder="输入用户名进行密码重置" prefix-icon="user" autocomplete="off"></el-input>
               </el-form-item>
               <el-form-item label-width="0">
-                <el-button type="primary" size="small" :disabled="state.loading" @click="onRegist"
-                  class="rr-login-right-main-btn"> 注册 </el-button>
+                <el-button type="primary" size="small" :disabled="state.loading" @click="onReset"
+                  class="rr-login-right-main-btn"> 重置密码 </el-button>
               </el-form-item>
             </el-form>
           </div>
@@ -93,7 +88,6 @@
 </template>
 
 <script lang="ts" setup>
-import type { TabsPaneContext } from 'element-plus'
 import { computed, onMounted, reactive, ref } from "vue";
 import { CacheToken } from "@/constants/cacheKey";
 import baseService from "@/service/baseService";
@@ -116,14 +110,19 @@ const state = reactive({
 
 const login = reactive({ username: "", password: "", captcha: "", uuid: "" });
 const regist = reactive({ username: "", password: "", email: "", confirmPassword: "" });
-const registEmailPass = ref({
+const reset = reactive({ username: "" });
+const registEmailPass = reactive<any>({
   source: '',
-  input: ''
+  input: '',
+  maxTime: 60,
+  countTime: 0,
+  loading: false,
+  timer: null
 });
 const isValidatEmail = computed(() => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(regist.email));
 const formRef = ref();
 const formRefForRegist = ref();
-const emailSendLoading = ref(false);
+const formRefForReset= ref();
 
 const validateEmail = (rule: any, value: any, callback: any) => {
   if (value === '') {
@@ -217,16 +216,15 @@ const onLogin = () => {
 
 const onRegist = () => {  
   formRefForRegist.value.validate((valid: boolean) => {
-    console.log(valid)
     if (valid) {
-      if (!registEmailPass.value.input.trim()) {
+      if (!registEmailPass.input.trim()) {
         ElMessage.error("验证码为空");
-        registEmailPass.value.input = '';
+        registEmailPass.input = '';
         return
       }
-      if (registEmailPass.value.source.trim() !== registEmailPass.value.input.trim()) {
+      if (registEmailPass.source.trim() !== registEmailPass.input.trim()) {
         ElMessage.error("验证码不正确");
-        registEmailPass.value.input = '';
+        registEmailPass.input = '';
         return
       }
       baseService
@@ -236,6 +234,7 @@ const onRegist = () => {
             activeName.value = 'first'
             ElMessage.success("注册成功");
             formRefForRegist.value.resetFields();
+            registEmailPass.value = { source: '', input: '' };
           } else {
             ElMessage.error(res.msg);
           }
@@ -246,20 +245,42 @@ const onRegist = () => {
   });
 }
 
+const onReset = () => {
+  baseService
+        .get("/retrievePassword", reset)
+        .then((res) => {
+          if (res.code === 0) {
+            activeName.value = 'first'
+            ElMessage.success("重置成功，请在邮箱中查看密码进行登录");
+            formRefForReset.value.resetFields();
+          } else {
+            ElMessage.error(res.msg);
+          }
+        });
+}
+
 const onSendEmail = () => {
-  if(!regist.email.trim()) return;
-  emailSendLoading.value = true;
+  if(!regist.email.trim() || registEmailPass.countTime !== 0) return;
+  registEmailPass.loading = true;
   baseService
         .get("/sendEmail", { email: regist.email })
         .then((res) => {
-          emailSendLoading.value = false;
+          registEmailPass.loading = false;
           if (res.code === 0) {
-            registEmailPass.value.source = res.data;
+            registEmailPass.source = res.data;
+            registEmailPass.countTime = registEmailPass.maxTime;
+            registEmailPass.timer = setInterval(() => {
+              console.log(registEmailPass)
+              if(registEmailPass.countTime === 0) {
+                registEmailPass.timer = null;
+              }
+              registEmailPass.countTime--;
+            }, 1000)
           } else {
             ElMessage.error(res.msg);
           }
         })
-        .catch(() => emailSendLoading.value = false);
+        .catch(() => registEmailPass.loading = false);
 }
 </script>
 
