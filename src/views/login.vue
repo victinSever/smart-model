@@ -54,7 +54,7 @@
               <el-form-item label-width="0">
                 <div style="display: flex;" class="email-pass">
                   <el-input v-model="registEmailPass.input" placeholder="验证码"></el-input>
-                  <el-button type="primary" :disabled="!isValidatEmail || registEmailPass.countTime" @click="onSendEmail" v-loading="registEmailPass.loading">
+                  <el-button type="primary" :disabled="!isValidatEmail(regist.email) || registEmailPass.countTime" @click="onSendEmail(regist.email)" v-loading="registEmailPass.loading">
                     <span v-if="registEmailPass.countTime === 0">发送验证码</span>
                     <span v-else>{{ registEmailPass.countTime }}s</span>
                   </el-button>
@@ -74,6 +74,18 @@
               @keyup.enter="onRegist">
               <el-form-item label-width="0" prop="username">
                 <el-input v-model="reset.username" placeholder="输入用户名进行密码重置" prefix-icon="user" autocomplete="off"></el-input>
+              </el-form-item>
+              <el-form-item label-width="0" prop="email">
+                <el-input v-model="reset.email" type="email" placeholder="邮箱" prefix-icon="box" autocomplete="off"></el-input>
+              </el-form-item>
+              <el-form-item label-width="0">
+                <div style="display: flex;" class="email-pass">
+                  <el-input v-model="registEmailPass.input" placeholder="验证码"></el-input>
+                  <el-button type="primary" :disabled="!isValidatEmail(reset.email) || registEmailPass.countTime" @click="onSendEmail(reset.email)" v-loading="registEmailPass.loading">
+                    <span v-if="registEmailPass.countTime === 0">发送验证码</span>
+                    <span v-else>{{ registEmailPass.countTime }}s</span>
+                  </el-button>
+                </div>
               </el-form-item>
               <el-form-item label-width="0">
                 <el-button type="primary" size="small" :disabled="state.loading" @click="onReset"
@@ -110,7 +122,7 @@ const state = reactive({
 
 const login = reactive({ username: "", password: "", captcha: "", uuid: "" });
 const regist = reactive({ username: "", password: "", email: "", confirmPassword: "" });
-const reset = reactive({ username: "" });
+const reset = reactive({ username: "", email: "" });
 const registEmailPass = reactive<any>({
   source: '',
   input: '',
@@ -119,10 +131,11 @@ const registEmailPass = reactive<any>({
   loading: false,
   timer: null
 });
-const isValidatEmail = computed(() => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(regist.email));
 const formRef = ref();
 const formRefForRegist = ref();
 const formRefForReset= ref();
+
+const isValidatEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
 const validateEmail = (rule: any, value: any, callback: any) => {
   if (value === '') {
@@ -246,7 +259,19 @@ const onRegist = () => {
 }
 
 const onReset = () => {
-  baseService
+  formRefForReset.value.validate((valid: boolean) => {
+    if (valid) {
+      if (!registEmailPass.input.trim()) {
+        ElMessage.error("验证码为空");
+        registEmailPass.input = '';
+        return
+      }
+      if (registEmailPass.source.trim() !== registEmailPass.input.trim()) {
+        ElMessage.error("验证码不正确");
+        registEmailPass.input = '';
+        return
+      }
+      baseService
         .get("/retrievePassword", reset)
         .then((res) => {
           if (res.code === 0) {
@@ -257,22 +282,25 @@ const onReset = () => {
             ElMessage.error(res.msg);
           }
         });
+    } else {
+      ElMessage.error("表单不合法");
+    }
+  }); 
 }
 
-const onSendEmail = () => {
-  if(!regist.email.trim() || registEmailPass.countTime !== 0) return;
+const onSendEmail = (emial: string) => {
+  if(!emial.trim() || registEmailPass.countTime !== 0) return;
   registEmailPass.loading = true;
   baseService
-        .get("/sendEmail", { email: regist.email })
+        .get("/sendEmail", { email: emial })
         .then((res) => {
           registEmailPass.loading = false;
           if (res.code === 0) {
             registEmailPass.source = res.data;
             registEmailPass.countTime = registEmailPass.maxTime;
             registEmailPass.timer = setInterval(() => {
-              console.log(registEmailPass)
-              if(registEmailPass.countTime === 0) {
-                registEmailPass.timer = null;
+              if(registEmailPass.countTime <= 0) {
+                clearInterval(registEmailPass.timer);
               }
               registEmailPass.countTime--;
             }, 1000)
