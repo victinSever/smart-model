@@ -50,6 +50,8 @@ const getBot = () => {
     .then((res) => {
       if (res.code === 0) {
         botInfo.value = res.data;
+        botInfo.value.knowledgeDisplaySwitch = res.data.knowledgeDisplaySwitch === 1;
+        botInfo.value.suggestionFlag = res.data.suggestionFlag === 1;
         getChatHistory(res.data.botId);
       }
     });
@@ -129,9 +131,12 @@ const getChatHistory = (id: string) => {
   baseService
     .get(`/bot/chat/history/${id}`)
     .then((res) => {
-      if (res.code === 0) {
+      if (res.code === 0 && res.data) {
         chatHistoryList.value = res.data;
         scrollToBottom();
+        if(botInfo.value.suggestionFlag === 1 && res.data.length !== 0) {
+          ElMessage.success(botInfo.value.guide);
+        }
       }
     });
 }
@@ -317,7 +322,7 @@ const handleCreateLink = () => {
                   </div>
                 </template>
                 <div class="content-box">
-                  <span v-if="botInfo.knowledgeNull && botInfo.knowledgeNull === 1">LLM响应</span>
+                  <span v-if="botInfo.knowledgeNull && botInfo.knowledgeNull === 1">知识库未找到对应数据</span>
                   <span v-else>正常返回</span>
                 </div>
               </el-form-item>
@@ -396,15 +401,6 @@ const handleCreateLink = () => {
               <el-form-item>
                 <template #label>
                   <div class="label-box">
-                    <span>Bot欢迎语</span>
-                  </div>
-                </template>
-                <el-input name="identityPrompt" placeholder="用户首次使用Bot的欢迎语" v-model="botInfo.guide" type="textarea"
-                  :rows="8" maxlength="13004" show-word-limit></el-input>
-              </el-form-item>
-              <el-form-item>
-                <template #label>
-                  <div class="label-box">
                     <span>用户提问建议</span>
                     <el-tooltip effect="dark" placement="right">
                       <template #content>
@@ -418,6 +414,15 @@ const handleCreateLink = () => {
                 </template>
                 <el-switch v-model="botInfo.suggestionFlag"></el-switch>
               </el-form-item>
+              <el-form-item>
+                <template #label>
+                  <div class="label-box">
+                    <span>Bot欢迎语</span>
+                  </div>
+                </template>
+                <el-input name="identityPrompt" placeholder="用户首次使用Bot的欢迎语" v-model="botInfo.guide" type="textarea"
+                  :rows="8" maxlength="13004" show-word-limit></el-input>
+              </el-form-item>            
             </el-form>
           </el-card>
         </el-collapse-item>

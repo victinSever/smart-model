@@ -72,7 +72,6 @@ const getChatHistory = () => {
           </svg>
         </div>
         <div class="item-main">
-          <!-- <div class="item-time">time</div> -->
           <div class="item-content" v-text="item.content">
           </div>
         </div>
