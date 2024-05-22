@@ -2,10 +2,10 @@
 import baseService from '@/service/baseService';
 import { dataToSelectGroup } from '@/utils/utils';
 import { ElMessage, ElMessageBox } from 'element-plus';
-import { computed, nextTick, onMounted, ref } from 'vue';
+import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue';
 import { useRoute } from "vue-router";
 
-const router = useRoute();
+const route = useRoute();
 const botInfo = ref<any>({});
 const modelList = ref<any>();
 const modeListGroup = computed(() => dataToSelectGroup(modelList.value));
@@ -19,6 +19,14 @@ const chatInput = ref('');
 const chatHistoryList = ref<Array<{ role: string; content: string; }>>([]);
 const scrollContainer = ref<HTMLElement | null>(null);
 const loading = ref(false);
+const openShare = ref(false);
+const shareConfig = ref({
+  lastTime: '1',
+  url: ''
+});
+watch(() => shareConfig.value, (v) => {
+  console.log(v)
+})
 
 onMounted(() => {
   getBot();
@@ -36,7 +44,7 @@ const changeModelName = (modelId: string) => {
 }
 
 const getBot = () => {
-  const botId = router.query.botId || '1';
+  const botId = route.query.botId || '1';
   baseService
     .get(`/bot/botinfo/${botId}`)
     .then((res) => {
@@ -71,7 +79,7 @@ const updateBot = () => {
 
 
 const submitChat = () => {
-  if(loading.value) return;
+  if (loading.value) return;
 
   let chatContent = chatInput.value;
   chatHistoryList.value.push({
@@ -89,8 +97,8 @@ const submitChat = () => {
   baseService
     .post("/bot/chat", {
       botId: value.botId,
-	    modelId: value.modelId,
-	    knowledgeBaseId: value.knowledgeBaseId,
+      modelId: value.modelId,
+      knowledgeBaseId: value.knowledgeBaseId,
       content: chatContent,
       botName: value.botName,
       describe: value.describe,
@@ -149,17 +157,28 @@ const flushChat = () => {
 const scrollToBottom = () => {
   nextTick(() => {
     if (scrollContainer.value) {
-    const content = scrollContainer.value.querySelector('.list-content');
-    if (content) {
-      scrollContainer.value.scrollTo({
-        top: content.scrollHeight,
-        behavior: 'smooth'
-      });
+      const content = scrollContainer.value.querySelector('.list-content');
+      if (content) {
+        scrollContainer.value.scrollTo({
+          top: content.scrollHeight,
+          behavior: 'smooth'
+        });
+      }
     }
-  }
-  }) 
+  })
 };
 
+const handleCreateLink = () => {
+  if (!botInfo.value) return;
+  baseService
+    .get(`/bot/chat/share/${botInfo.value.botId}/${shareConfig.value.lastTime}`)
+    .then((res) => {
+      if (res.code === 0) {
+        const baseRoute = 'history'
+        shareConfig.value.url = `${window.location.origin}/#/${baseRoute}/${res.data}`
+      }
+    });
+}
 
 </script>
 
@@ -186,11 +205,10 @@ const scrollToBottom = () => {
           <el-card class="bot-config" shadow="never">
             <el-form :model="botInfo" label-position="left" label-width="160px">
               <el-form-item label="bot名称（LLM）">
-                <el-input name="name" placeholder="Bot名称" v-model="botInfo.botName"></el-input>
+                <el-input placeholder="Bot名称" v-model="botInfo.botName"></el-input>
               </el-form-item>
               <el-form-item label="大语言模型（LLM）">
-                <el-select name="modelName" v-model="botInfo.modelId" placeholder="请选择" @change="changeModelName"
-                  style="width: 100%;">
+                <el-select v-model="botInfo.modelId" placeholder="请选择" @change="changeModelName" style="width: 100%;">
                   <el-option-group v-for="group in modeListGroup" :key="group.label" :label="group.label">
                     <el-option v-for="item in group.options" :key="item.value" :label="item.label"
                       :value="item.value" />
@@ -240,7 +258,7 @@ const scrollToBottom = () => {
                 <template #label>
                   <div class="label-box">
                     <span>是否开启知识库设置</span>
-                  </div>                
+                  </div>
                 </template>
                 <el-switch v-model="botInfo.knowledgeFlag"></el-switch>
               </el-form-item>
@@ -337,7 +355,7 @@ const scrollToBottom = () => {
                 <template #label>
                   <div class="label-box">
                     <span>是否开启记忆设置</span>
-                  </div>                
+                  </div>
                 </template>
                 <el-switch v-model="botInfo.memoryFlag"></el-switch>
               </el-form-item>
@@ -408,17 +426,44 @@ const scrollToBottom = () => {
 
     <el-col class="right-container" :span="12">
       <div class="top-header">
-        <div>
-          <p class="top-title" style="font-size: 1.2rem;">调试</p>
-          <div class="top-header-btns">
-            <el-tooltip class="box-item" effect="dark" content="重置会话" placement="top">
-              <span @click="flushChat">
-                <el-icon>
-                  <DeleteFilled />
-                </el-icon>
-              </span>
-            </el-tooltip>
+        <div v-if="!openShare" class="header-content">
+          <div class="header-title">
+            <p class="top-title" style="font-size: 1.2rem;">调试</p>
+            <div class="top-header-btns">
+              <el-tooltip class="box-item" effect="dark" content="分享" placement="top">
+                <span @click="openShare = true">
+                  <el-icon>
+                    <Share />
+                  </el-icon>
+                </span>
+              </el-tooltip>
+              <el-tooltip class="box-item" effect="dark" content="重置会话" placement="top">
+                <span @click="flushChat">
+                  <el-icon>
+                    <DeleteFilled />
+                  </el-icon>
+                </span>
+              </el-tooltip>
+            </div>
           </div>
+        </div>
+        <div v-else class="header-content share-content">
+          <div class="header-title">
+            <p class="top-title" style="font-size: 1.2rem;">分享</p>
+            <el-icon @click="openShare = false" size="20">
+              <Close />
+            </el-icon>
+          </div>
+          <el-input v-model="shareConfig.url" placeholder="点击生成分享链接">
+            <template #append>
+              <el-button type="primary" @click="handleCreateLink">生成分享链接</el-button>
+            </template>
+          </el-input>
+          <el-radio-group v-model="shareConfig.lastTime" style="margin-top: 1rem;">
+            <el-radio value="1" label="1">1天</el-radio>
+            <el-radio value="2" label="2">7天</el-radio>
+            <el-radio value="3" label="3">30天</el-radio>
+          </el-radio-group>
         </div>
       </div>
       <div class="chat-content" ref="scrollContainer">
@@ -443,12 +488,15 @@ const scrollToBottom = () => {
                 xmlns="http://www.w3.org/2000/svg" p-id="5327" width="200" height="200">
                 <path
                   d="M956.098517 789.181927c-14.806217-42.936905-63.826678-49.086975-104.791671-66.37471-44.98761-18.957771-94.855368-40.97625-139.734508-59.392692-12.80463-3.481288-25.620517-6.982018-38.425148-10.475586-15.286148-10.522658-30.250978-45.488007-38.425148-62.873979-8.15268-1.159406-16.296151-2.320858-24.459065-3.481288 1.25969-26.900673 17.906835-28.351722 24.459065-48.898687 5.763261-18.138102 0.592494-41.697681 9.733689-58.472739 6.343475-11.645225 20.678972-11.735275 27.841092-21.719674 6.503111-9.073656 10.784624-24.870434 12.80463-35.985586 3.702322-20.287045 6.922666-48.066739-2.710738-68.185962-5.542226-11.573593-9.042957-12.673647-10.584056-26.720571-1.870604-17.007349 5.021364-72.499198 5.302773-84.492346 0.700965-31.132044-0.049119-33.653471-7.582699-63.97608 0 0-9.154497-27.470655-23.48897-35.743062l-28.580942-4.92108-17.667382-16.367783c-71.179133-43.805692-147.499355-13.07376-188.365088 3.483334-58.903551 19.107173-96.137571 76.788897-70.136384 199.9878 4.442172 21.039175-11.524474 30.451546-10.483772 41.926902 2.279926 25.120121 2.77009 85.48393 26.499537 100.358709 2.200108 1.370207 19.027355 5.593392 18.918885 4.442172 2.329045 24.450878 4.66116 48.919153 6.982018 73.359798 5.931083 16.255219 20.137643 18.037818 24.267706 40.986483l-18.185174 4.421706c-8.175193 17.385972-23.149233 52.351322-38.435381 62.873979-12.80463 3.493567-25.620517 6.994298-38.414915 10.475586-44.887326 18.416442-94.757131 40.434921-139.744741 59.392692-40.955784 17.287735-89.985454 23.437805-104.802928 66.37471 0 29.16218-2.739391 98.038874-1.989307 136.234801l391.601886 0 28.752858-196.35711-23.899316-50.439786 55.17053-26.452465 46.479591 25.911136-25.620517 51.940976 45.307905 195.396225 374.406249 0C958.858374 887.2208 956.098517 818.344107 956.098517 789.181927z"
-                  fill="#AFAFAF" p-id="5328"></path>
+                  fill="#7367f0" p-id="5328"></path>
               </svg>
             </div>
             <div class="item-main">
-              <!-- <div class="item-time">time</div> -->
-              <div class="item-content" v-text="item.content">
+              <div class="item-content">
+                <div v-text="item.content" v-if="item.content !== 'loading'"></div>
+                <div v-else>
+                  <el-button type="primary" text loading-icon="Eleme" loading>Loading</el-button>
+                </div>
               </div>
             </div>
           </div>
@@ -485,6 +533,14 @@ const scrollToBottom = () => {
 
     &::-webkit-scrollbar {
       width: 2px;
+    }
+
+    .top-header>div {
+      height: 3rem;
+      margin: 1rem 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
     }
 
     .label-box,
@@ -548,6 +604,45 @@ const scrollToBottom = () => {
     flex-direction: column;
     height: 100%;
 
+    .top-header {
+      margin: 0.3rem 0 1rem 0;
+
+      .header-content {
+        width: 100%;
+
+        .header-title {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+
+          .el-icon {
+            cursor: pointer;
+          }
+        }
+      }
+
+      .top-header-btns {
+        display: flex;
+
+        span {
+          display: inline-block;
+          padding: 0 0.5rem;
+          margin: 0 0.5rem;
+          border-radius: 0.5rem;
+          cursor: pointer;
+          font-size: 1.2rem;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          height: 2.5rem;
+
+          &:hover {
+            background-color: #eff0f2;
+          }
+        }
+      }
+    }
+
     .chat-content {
       flex: 1;
       border-top: 1px solid #ddd;
@@ -565,9 +660,10 @@ const scrollToBottom = () => {
           width: 100%;
 
           .item-user {
-            width: 2rem;
-            min-width: 2rem;
-            height: 2rem;
+            width: 2.5rem;
+            min-width: 2.5rem;
+            height: 2.5rem;
+            padding: 0.3rem;
             border-radius: 0.5rem;
             display: flex;
             justify-content: center;
@@ -589,7 +685,15 @@ const scrollToBottom = () => {
         }
 
         .session-user {
-          flex-direction: row-reverse
+          flex-direction: row-reverse;
+
+          .item-user {
+            background-color: #e8e7fd;
+          }
+
+          .item-main .item-content {
+            background-color: #e8e7fd;
+          }
         }
       }
     }
@@ -616,6 +720,7 @@ const scrollToBottom = () => {
           background-color: #d9d9e7;
         }
       }
+
       .disabled {
         &:hover {
           background-color: transparent;
@@ -625,34 +730,6 @@ const scrollToBottom = () => {
     }
   }
 
-  .top-header {
-    height: 3rem;
-    line-height: 3rem;
-    margin-bottom: 2rem;
 
-    .top-header-btns {
-      span {
-        display: inline-block;
-        padding: 0 1rem;
-        border-radius: 0.5rem;
-        cursor: pointer;
-        font-size: 1.2rem;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        height: 2.5rem;
-
-        &:hover {
-          background-color: #d9d9e7;
-        }
-      }
-    }
-
-    &>div {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-  }
 }
 </style>

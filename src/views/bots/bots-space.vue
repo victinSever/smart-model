@@ -96,7 +96,7 @@ const deleteBot = (botId: string) => {
         type: 'warning'
     }).then(() => {
         baseService
-            .delete("/bot/botinfo/delete", { ids: [botId] })
+            .post("/bot/botinfo/delete", { ids: [botId] })
             .then((res) => {
                 if (res.code === 0) {
                     getBot();

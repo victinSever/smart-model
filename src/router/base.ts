@@ -42,6 +42,11 @@ const routes: Array<RouteRecordRaw> = [
     ]
   },
   {
+    path: "/history/:id",
+    component: () => import("@/views/history.vue"),
+    meta: {title: "对话", isNavigationMenu: false, isIndex: true }
+  },
+  {
     path: "/index",
     component: Layout,
     redirect: "/home",
