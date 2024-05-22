@@ -389,19 +389,24 @@ const starText = (item: any, e: MouseEvent) => {
   .prompt-list {
     min-height: 400px;
     margin-top: 1rem;
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(20%, 1fr));
-    gap: 1.5rem;
-    align-content: start;
-    grid-auto-rows: auto;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
 
     .prompt-item {
-      margin-left: 0;
-      margin-right: 0;
+      flex: 0 1 calc(25% - 0.75rem);
       cursor: pointer;
       font-size: 0.85rem;
       background-image: url(@/assets/images/prompt-item-bgc.png);
       background-size: cover;
+
+      &:nth-child(4n + 1) {
+            margin-left: 0;
+        }
+
+        &:nth-child(4n) {
+            margin-right: 0;
+        }
 
       .item-top {
         display: flex;

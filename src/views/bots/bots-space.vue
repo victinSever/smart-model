@@ -187,7 +187,6 @@ const handleAvatarSuccess: UploadProps['onSuccess'] = (res) => {
     }
 }
 
-
 </script>
 
 <template>
@@ -327,18 +326,12 @@ const handleAvatarSuccess: UploadProps['onSuccess'] = (res) => {
 }
 
 .bot-list {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(20%, 1fr));
-    gap: 1.5rem;
-    align-content: start;
-    /* 控制子元素在垂直方向上的对齐方式 */
-    grid-auto-rows: auto;
-    /* 设置子元素的行高为自动 */
-    min-height: 600px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
 
     .bot-item {
-        margin-left: 0;
-        margin-right: 0;
+        flex: 0 1 calc(25% - 0.75rem);
         cursor: pointer;
         background-image: url(@/assets/images/prompt-item-bgc.png);
         background-size: cover;
