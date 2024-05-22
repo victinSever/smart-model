@@ -134,7 +134,7 @@ const getChatHistory = (id: string) => {
       if (res.code === 0 && res.data) {
         chatHistoryList.value = res.data;
         scrollToBottom();
-        if(botInfo.value.suggestionFlag === 1 && res.data.length !== 0) {
+        if(botInfo.value.suggestionFlag && res.data.length !== 0) {
           ElMessage.success(botInfo.value.guide);
         }
       }
