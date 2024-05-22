@@ -21,7 +21,7 @@ interface IBotParam {
 
 interface ICreateBotParam {
     identityPrompt: string,
-    name: string;
+    botName: string;
     modelId: string;
     modelName: string;
     imagePath: string;
@@ -47,7 +47,7 @@ const botMap = ref<{
 const isPublic = ref(true);
 const dialogVisible = ref(false);
 const createBotParam = ref<ICreateBotParam>({
-    name: '',
+    botName: '',
     modelId: '',
     modelName: '',
     identityPrompt: '',
@@ -107,7 +107,7 @@ const deleteBot = (botId: string) => {
 
 const resetCreateBotParam = () => {
     createBotParam.value = {
-        name: '',
+        botName: '',
         modelId: '',
         modelName: '',
         identityPrompt: '',
@@ -117,7 +117,7 @@ const resetCreateBotParam = () => {
 
 const judgeCreateParam = () => {
     const value = createBotParam.value;
-    if (!value.identityPrompt || !value.modelId || !value.modelName || !value.name) {
+    if (!value.identityPrompt || !value.modelId || !value.modelName || !value.botName) {
         ElMessage.warning('填写不完整');
         return false;
     }
@@ -287,7 +287,7 @@ const handleAvatarSuccess: UploadProps['onSuccess'] = (res) => {
                 <el-form :model="createBotParam" label-position="left">
                     <el-form-item>
                         <label for="name">Bot名称</label>
-                        <el-input name="name" placeholder="Bot名称" v-model="createBotParam.name"></el-input>
+                        <el-input name="name" placeholder="Bot名称" v-model="createBotParam.botName"></el-input>
                     </el-form-item>
                     <el-form-item>
                         <div style="display: flex; flex-direction: column; width: 100%;">
