@@ -39,7 +39,7 @@ const suggestionText = computed(() => {
 const showKnowlegde = computed(() => {
   return botInfo.value.knowledgeFlag;
 });
-const drawerShowKnowlegde= ref(false);
+const drawerShowKnowlegde = ref(false);
 
 onMounted(() => {
   getBot();
@@ -261,7 +261,16 @@ const handleSubmitSuggestion = () => {
                   </div>
                 </template>
                 <div class="content-box">
-                  <span>{{ botInfo.temperature }}</span>
+                  <el-popover placement="bottom-start" trigger="click" :width="400">
+                    <template #reference>
+                      <span>{{ botInfo.temperature }}</span>
+                    </template>
+                    <el-form :model="botInfo" label-position="left" label-width="120px">
+                      <el-form-item label="温度">
+                        <el-input-number v-model="botInfo.temperature" :min="-47" :max="1400"></el-input-number>
+                      </el-form-item>
+                    </el-form>
+                  </el-popover>
                 </div>
               </el-form-item>
               <el-form-item label-width="0">
@@ -308,7 +317,11 @@ const handleSubmitSuggestion = () => {
                   </div>
                 </template>
                 <div class="content-box">
-                  <span>{{ botInfo.matchingQuantity }}条知识可用</span>
+                  <el-popover placement="top-start" trigger="click" content="去知识库上传" :show-arrow="false">
+                    <template #reference>
+                      <span>{{ botInfo.matchingQuantity }}条知识可用</span>
+                    </template>
+                  </el-popover>
                 </div>
               </el-form-item>
               <el-form-item>
@@ -326,8 +339,26 @@ const handleSubmitSuggestion = () => {
                   </div>
                 </template>
                 <div class="content-box">
-                  <span>知识相关性：{{ botInfo.relativity }}</span>
-                  <span>召回数量：{{ botInfo.matchingQuantity }}</span>
+                  <el-popover placement="bottom-start" trigger="click" :width="400" :show-arrow="false">
+                    <template #reference>
+                      <span>知识相关性：{{ botInfo.relativity }}</span>
+                    </template>
+                    <el-form :model="botInfo" label-position="left" label-width="120px">
+                      <el-form-item label="知识相关性">
+                        <el-input-number v-model="botInfo.relativity" :min="0" :max="100"></el-input-number>
+                      </el-form-item>
+                    </el-form>
+                  </el-popover>
+                  <el-popover placement="bottom-start" trigger="click" :width="400" :show-arrow="false">
+                    <template #reference>
+                      <span>召回数量：{{ botInfo.matchingQuantity }}</span>
+                    </template>
+                    <el-form :model="botInfo" label-position="left" label-width="120px">
+                      <el-form-item label="召回数量">
+                        <el-input-number v-model="botInfo.matchingQuantity" :min="0" :max="100"></el-input-number>
+                      </el-form-item>
+                    </el-form>
+                  </el-popover>
                 </div>
               </el-form-item>
               <el-form-item label="知识检索为空">
@@ -348,8 +379,17 @@ const handleSubmitSuggestion = () => {
                   </div>
                 </template>
                 <div class="content-box">
-                  <span v-if="botInfo.knowledgeNull && botInfo.knowledgeNull === 1">知识库未找到对应数据</span>
-                  <span v-else>正常返回</span>
+                  <el-popover placement="bottom-start" trigger="click" :width="400" :show-arrow="false">
+                    <template #reference>
+                      <span v-if="botInfo.knowledgeNull && botInfo.knowledgeNull === 1">知识库未找到对应数据</span>
+                      <span v-else>正常返回</span>
+                    </template>
+                    <el-form :model="botInfo" label-position="left" label-width="120px">
+                      <el-form-item label="知识相关性">
+                        <el-input-number v-model="botInfo.relativity" :min="0" :max="100"></el-input-number>
+                      </el-form-item>
+                    </el-form>
+                  </el-popover>
                 </div>
               </el-form-item>
               <el-form-item>
@@ -463,7 +503,9 @@ const handleSubmitSuggestion = () => {
             <div class="top-header-btns">
               <el-tooltip class="box-item" effect="dark" content="知识库" placement="top" v-if="showKnowlegde">
                 <span @click="drawerShowKnowlegde = true">
-                  <el-icon><Histogram /></el-icon>
+                  <el-icon>
+                    <Histogram />
+                  </el-icon>
                 </span>
               </el-tooltip>
               <el-tooltip class="box-item" effect="dark" content="分享" placement="top">
@@ -636,6 +678,7 @@ const handleSubmitSuggestion = () => {
           padding: 0.3rem 0.7rem;
           border-radius: 3px;
           cursor: pointer;
+
           &:hover {
             background-color: #edeef1;
           }
@@ -770,6 +813,7 @@ const handleSubmitSuggestion = () => {
           padding: 0.5rem;
           border-radius: 0.2rem;
           cursor: pointer;
+
           &:hover {
             color: #000;
           }
@@ -811,11 +855,12 @@ const handleSubmitSuggestion = () => {
     &:deep(.el-card__body) {
       padding: 0 1rem;
     }
+
     .list-item {
       margin: 1rem 0;
       white-space: pre-line;
     }
   }
-  
+
 }
 </style>
