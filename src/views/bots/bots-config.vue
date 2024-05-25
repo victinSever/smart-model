@@ -127,7 +127,7 @@ const submitChat = () => {
         flag: value.knowledgeFlag || false,
         relativity: value.relativity,
         matchingQuantity: value.matchingQuantity,
-        knowledgeNull: value.knowledgeNull || 0,
+        knowledgeNull: parseInt(value.knowledgeNull) || 0,
         knowledgeDisplaySwitch: value.knowledgeDisplaySwitch,
       }
     })
@@ -267,7 +267,7 @@ const handleSubmitSuggestion = () => {
                     </template>
                     <el-form :model="botInfo" label-position="left" label-width="120px">
                       <el-form-item label="温度">
-                        <el-input-number v-model="botInfo.temperature" :min="-47" :max="1400"></el-input-number>
+                        <el-input-number v-model="botInfo.temperature" :min="-47" :max="1400" size="small"></el-input-number>
                       </el-form-item>
                     </el-form>
                   </el-popover>
@@ -345,7 +345,7 @@ const handleSubmitSuggestion = () => {
                     </template>
                     <el-form :model="botInfo" label-position="left" label-width="120px">
                       <el-form-item label="知识相关性">
-                        <el-input-number v-model="botInfo.relativity" :min="0" :max="100"></el-input-number>
+                        <el-input-number v-model="botInfo.relativity" :min="0" :max="100" size="small"></el-input-number>
                       </el-form-item>
                     </el-form>
                   </el-popover>
@@ -355,7 +355,7 @@ const handleSubmitSuggestion = () => {
                     </template>
                     <el-form :model="botInfo" label-position="left" label-width="120px">
                       <el-form-item label="召回数量">
-                        <el-input-number v-model="botInfo.matchingQuantity" :min="0" :max="100"></el-input-number>
+                        <el-input-number v-model="botInfo.matchingQuantity" :min="0" :max="100" size="small"></el-input-number>
                       </el-form-item>
                     </el-form>
                   </el-popover>
@@ -381,12 +381,15 @@ const handleSubmitSuggestion = () => {
                 <div class="content-box">
                   <el-popover placement="bottom-start" trigger="click" :width="400" :show-arrow="false">
                     <template #reference>
-                      <span v-if="botInfo.knowledgeNull && botInfo.knowledgeNull === 1">知识库未找到对应数据</span>
+                      <span v-if="botInfo.knowledgeNull && botInfo.knowledgeNull == 1">知识库未找到对应数据</span>
                       <span v-else>正常返回</span>
                     </template>
                     <el-form :model="botInfo" label-position="left" label-width="120px">
-                      <el-form-item label="知识相关性">
-                        <el-input-number v-model="botInfo.relativity" :min="0" :max="100"></el-input-number>
+                      <el-form-item label="知识检索为空">
+                        <el-radio-group v-model="botInfo.knowledgeNull" class="ml-4">
+                          <el-radio value="0" label="0" size="large">正常返回</el-radio>
+                          <el-radio value="1" label="1" size="large">知识库未找到对应数据</el-radio>
+                        </el-radio-group>
                       </el-form-item>
                     </el-form>
                   </el-popover>
@@ -446,8 +449,17 @@ const handleSubmitSuggestion = () => {
                     </el-tooltip>
                   </div>
                 </template>
-                <div class="content-box">
-                  <span>启用最近{{ botInfo.memoryStrategy }}轮聊天记录</span>
+                <div class="content-box"> 
+                  <el-popover placement="bottom-start" trigger="click" :width="400" :show-arrow="false">
+                    <template #reference>
+                      <span>启用最近{{ botInfo.memoryStrategy }}轮聊天记录</span>
+                    </template>
+                    <el-form :model="botInfo" label-position="left" label-width="120px">
+                      <el-form-item label="短期记忆">
+                        <el-input-number v-model="botInfo.memoryStrategy" :min="0" :max="100" size="small"></el-input-number>
+                      </el-form-item>
+                    </el-form>
+                  </el-popover>
                 </div>
               </el-form-item>
             </el-form>
