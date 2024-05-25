@@ -31,7 +31,11 @@ const chatResult = ref({
     content: '',
     role: ''
   }
-})
+});
+const suggestionText = computed(() => {
+  const list = chatResult.value.guessQuestion;
+  return list && list.length > 0 ? list[0] : '';
+});
 
 onMounted(() => {
   getBot();
@@ -127,11 +131,12 @@ const submitChat = () => {
     .then((res) => {
       loading.value = false;
       if (res.code === 0) {
+        scrollToBottom();
         chatResult.value = res.data;
         chatHistoryList.value.pop();
         chatHistoryList.value.pop();
-        chatHistoryList.value.push({ content: chatContent, role: 'user'});
-        chatHistoryList.value.push({ content: res.data.message.content, role: 'assistant'});
+        chatHistoryList.value.push({ content: chatContent, role: 'user' });
+        chatHistoryList.value.push({ content: res.data.message.content, role: 'assistant' });
       }
     }).catch(() => {
       chatHistoryList.value.pop();
@@ -147,7 +152,7 @@ const getChatHistory = (id: string) => {
       if (res.code === 0 && res.data) {
         chatHistoryList.value = res.data;
         scrollToBottom();
-        if(botInfo.value.suggestionFlag && res.data.length !== 0) {
+        if (botInfo.value.suggestionFlag && res.data.length !== 0) {
           ElMessage.success(botInfo.value.guide);
         }
       }
@@ -198,6 +203,10 @@ const handleCreateLink = () => {
     });
 }
 
+const handleSubmitSuggestion = () => {
+  chatInput.value = suggestionText.value;
+  chatResult.value.guessQuestion = [];
+}
 </script>
 
 <template>
@@ -435,7 +444,7 @@ const handleCreateLink = () => {
                 </template>
                 <el-input name="identityPrompt" placeholder="用户首次使用Bot的欢迎语" v-model="botInfo.guide" type="textarea"
                   :rows="8" maxlength="13004" show-word-limit></el-input>
-              </el-form-item>            
+              </el-form-item>
             </el-form>
           </el-card>
         </el-collapse-item>
@@ -521,6 +530,9 @@ const handleCreateLink = () => {
         </div>
       </div>
       <div class="input-content">
+        <div class="input-suggestion" v-if="suggestionText && !loading">
+          <span v-text="'你可以继续问我：' + suggestionText" @click="handleSubmitSuggestion"></span>
+        </div>
         <el-input placeholder="请输入消息" v-model="chatInput" maxlength="200" :show-word-limit="true" :disabled="loading"
           @keydown.enter="submitChat">
           <template #suffix>
@@ -717,9 +729,26 @@ const handleCreateLink = () => {
     }
 
     .input-content {
-      height: 4rem;
       display: flex;
-      align-items: center;
+      flex-direction: column;
+      margin-bottom: 0.5rem;
+      margin-top: 1rem;
+
+      .input-suggestion {
+        margin-bottom: 1rem;
+        background-color: #fff;
+
+        span {
+          border: 1px solid #ddd;
+          color: #777;
+          padding: 0.5rem;
+          border-radius: 0.2rem;
+          cursor: pointer;
+          &:hover {
+            color: #000;
+          }
+        }
+      }
 
       .el-input {
         height: 3rem;
