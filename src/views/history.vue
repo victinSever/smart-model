@@ -157,6 +157,7 @@ const getChatHistory = () => {
         padding: 0.5rem 0.8rem;
         background-color: #f7f7fa;
         border-radius: 0.5rem;
+        white-space: pre-line;
 
       }
     }

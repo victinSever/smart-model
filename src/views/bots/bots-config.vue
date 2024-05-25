@@ -2,7 +2,7 @@
 import baseService from '@/service/baseService';
 import { dataToSelectGroup } from '@/utils/utils';
 import { ElMessage, ElMessageBox } from 'element-plus';
-import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue';
+import { computed, nextTick, onMounted, ref } from 'vue';
 import { useRoute } from "vue-router";
 
 const route = useRoute();
@@ -24,7 +24,7 @@ const shareConfig = ref({
   lastTime: '1',
   url: ''
 });
-const chatResult = ref({
+const chatResult = ref<any>({
   guessQuestion: [],
   knowledgeData: [],
   message: {
@@ -36,6 +36,10 @@ const suggestionText = computed(() => {
   const list = chatResult.value.guessQuestion;
   return list && list.length > 0 ? list[0] : '';
 });
+const showKnowlegde = computed(() => {
+  return botInfo.value.knowledgeFlag;
+});
+const drawerShowKnowlegde= ref(false);
 
 onMounted(() => {
   getBot();
@@ -87,7 +91,6 @@ const updateBot = () => {
       }
     });
 }
-
 
 const submitChat = () => {
   if (loading.value) return;
@@ -206,6 +209,7 @@ const handleCreateLink = () => {
 const handleSubmitSuggestion = () => {
   chatInput.value = suggestionText.value;
   chatResult.value.guessQuestion = [];
+  scrollToBottom();
 }
 </script>
 
@@ -457,6 +461,11 @@ const handleSubmitSuggestion = () => {
           <div class="header-title">
             <p class="top-title" style="font-size: 1.2rem;">调试</p>
             <div class="top-header-btns">
+              <el-tooltip class="box-item" effect="dark" content="知识库" placement="top" v-if="showKnowlegde">
+                <span @click="drawerShowKnowlegde = true">
+                  <el-icon><Histogram /></el-icon>
+                </span>
+              </el-tooltip>
               <el-tooltip class="box-item" effect="dark" content="分享" placement="top">
                 <span @click="openShare = true">
                   <el-icon>
@@ -520,7 +529,7 @@ const handleSubmitSuggestion = () => {
             </div>
             <div class="item-main">
               <div class="item-content">
-                <div v-text="item.content" v-if="item.content !== 'loading'"></div>
+                <div v-html="item.content" v-if="item.content !== 'loading'"></div>
                 <div v-else>
                   <el-button type="primary" text loading-icon="Eleme" loading>Loading</el-button>
                 </div>
@@ -531,7 +540,7 @@ const handleSubmitSuggestion = () => {
       </div>
       <div class="input-content">
         <div class="input-suggestion" v-if="suggestionText && !loading">
-          <span v-text="'你可以继续问我：' + suggestionText" @click="handleSubmitSuggestion"></span>
+          <span v-html="'你可以继续问我：' + suggestionText" @click="handleSubmitSuggestion"></span>
         </div>
         <el-input placeholder="请输入消息" v-model="chatInput" maxlength="200" :show-word-limit="true" :disabled="loading"
           @keydown.enter="submitChat">
@@ -546,6 +555,17 @@ const handleSubmitSuggestion = () => {
       </div>
     </el-col>
   </el-row>
+
+  <el-drawer v-model="drawerShowKnowlegde" title="I am the title" :with-header="false">
+    <div class="knowledge-drawer">
+      <h2 class="drawer-header">知识库列表</h2>
+      <div class="drawer-list">
+        <el-card class="list-item" v-for="item in chatResult.knowledgeData">
+          <p v-html="item.content"></p>
+        </el-card>
+      </div>
+    </div>
+  </el-drawer>
 </template>
 
 <style scoped lang="scss">
@@ -612,9 +632,13 @@ const handleSubmitSuggestion = () => {
 
         span {
           margin-right: 0.5rem;
-          background-color: #edeff4;
-          padding: 0.3rem 0.5rem;
+          background-color: #f7f8fa;
+          padding: 0.3rem 0.7rem;
           border-radius: 3px;
+          cursor: pointer;
+          &:hover {
+            background-color: #edeef1;
+          }
         }
       }
 
@@ -709,7 +733,7 @@ const handleSubmitSuggestion = () => {
               padding: 0.5rem 0.8rem;
               background-color: #f7f7fa;
               border-radius: 0.5rem;
-
+              white-space: pre-line;
             }
           }
         }
@@ -739,6 +763,8 @@ const handleSubmitSuggestion = () => {
         background-color: #fff;
 
         span {
+          display: inline-block;
+          text-wrap: wrap;
           border: 1px solid #ddd;
           color: #777;
           padding: 0.5rem;
@@ -778,5 +804,18 @@ const handleSubmitSuggestion = () => {
   }
 
 
+}
+
+.knowledge-drawer {
+  .drawer-list {
+    &:deep(.el-card__body) {
+      padding: 0 1rem;
+    }
+    .list-item {
+      margin: 1rem 0;
+      white-space: pre-line;
+    }
+  }
+  
 }
 </style>
