@@ -24,8 +24,13 @@ const shareConfig = ref({
   lastTime: '1',
   url: ''
 });
-watch(() => shareConfig.value, (v) => {
-  console.log(v)
+const chatResult = ref({
+  guessQuestion: [],
+  knowledgeData: [],
+  message: {
+    content: '',
+    role: ''
+  }
 })
 
 onMounted(() => {
@@ -122,9 +127,17 @@ const submitChat = () => {
     .then((res) => {
       loading.value = false;
       if (res.code === 0) {
-        getChatHistory(botInfo.value.botId);
+        chatResult.value = res.data;
+        chatHistoryList.value.pop();
+        chatHistoryList.value.pop();
+        chatHistoryList.value.push({ content: chatContent, role: 'user'});
+        chatHistoryList.value.push({ content: res.data.message.content, role: 'assistant'});
       }
-    }).catch(() => loading.value = false);
+    }).catch(() => {
+      chatHistoryList.value.pop();
+      chatHistoryList.value.pop();
+      loading.value = false;
+    });
 }
 
 const getChatHistory = (id: string) => {
